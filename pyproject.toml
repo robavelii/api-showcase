@@ -1,0 +1,160 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openapi-showcase"
+version = "1.0.0"
+description = "Production-grade monorepo with 5 FastAPI applications demonstrating modern backend development"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenAPI Showcase Team" }
+]
+keywords = ["fastapi", "openapi", "api", "rest", "async"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+
+dependencies = [
+    # Web Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "gunicorn>=22.0.0",
+    
+    # Data Validation & ORM
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "sqlmodel>=0.0.21",
+    
+    # Database
+    "asyncpg>=0.29.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "alembic>=1.13.0",
+    
+    # Redis & Caching
+    "redis>=5.0.0",
+    
+    # Background Tasks
+    "celery[redis]>=5.4.0",
+    "flower>=2.0.0",
+    
+    # Authentication
+    "pyjwt>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
+    
+    # File Uploads
+    "python-multipart>=0.0.9",
+    
+    # Rate Limiting
+    "slowapi>=0.1.9",
+    
+    # HTTP Client
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.27.0",
+    
+    # Property-Based Testing
+    "hypothesis>=6.100.0",
+    
+    # Test Data Generation
+    "factory-boy>=3.3.0",
+    "faker>=24.0.0",
+    
+    # Code Quality
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+    "pre-commit>=3.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/openapi-showcase"
+Documentation = "https://github.com/example/openapi-showcase#readme"
+Repository = "https://github.com/example/openapi-showcase"
+
+[tool.hatch.build.targets.wheel]
+packages = ["apps", "shared"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "property: Property-based tests",
+    "e2e: End-to-end tests",
+]
+
+[tool.coverage.run]
+source = ["apps", "shared"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+fail_under = 90
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "shared"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "flower.*", "slowapi.*"]
+ignore_missing_imports = true

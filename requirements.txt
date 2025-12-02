@@ -1,0 +1,37 @@
+# OpenAPI Showcase - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Web Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+gunicorn>=22.0.0
+
+# Data Validation & ORM
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+sqlmodel>=0.0.21
+
+# Database
+asyncpg>=0.29.0
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.13.0
+
+# Redis & Caching
+redis>=5.0.0
+
+# Background Tasks
+celery[redis]>=5.4.0
+flower>=2.0.0
+
+# Authentication
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+
+# File Uploads
+python-multipart>=0.0.9
+
+# Rate Limiting
+slowapi>=0.1.9
+
+# HTTP Client
+httpx>=0.27.0
