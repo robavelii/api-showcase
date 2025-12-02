@@ -1,0 +1,1 @@
+# OpenAPI Showcase - Applications Package
