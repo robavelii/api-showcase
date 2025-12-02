@@ -1,0 +1,282 @@
+services:
+  # ============================================
+  # Infrastructure Services
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: openapi-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-openapi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openapi_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-openapi_showcase}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openapi} -d ${POSTGRES_DB:-openapi_showcase}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openapi-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: openapi-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - openapi-network
+
+  # ============================================
+  # Database Migrations
+  # ============================================
+  migrations:
+    build:
+      context: .
+      target: production
+    container_name: openapi-migrations
+    command: python -m alembic upgrade head
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - openapi-network
+    restart: "no"
+
+  # ============================================
+  # Background Task Processing
+  # ============================================
+  celery-worker:
+    build:
+      context: .
+      target: production
+    container_name: openapi-celery-worker
+    command: celery -A shared.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - openapi-network
+
+  celery-beat:
+    build:
+      context: .
+      target: production
+    container_name: openapi-celery-beat
+    command: celery -A shared.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - openapi-network
+
+  flower:
+    build:
+      context: .
+      target: production
+    container_name: openapi-flower
+    command: >
+      celery -A shared.celery_app flower
+      --port=5555
+      --url_prefix=flower
+      --persistent=true
+      --db=/data/flower.db
+      --max_tasks=10000
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    volumes:
+      - flower_data:/data
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery-worker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/flower/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - openapi-network
+
+  # ============================================
+  # API Services
+  # ============================================
+  auth-api:
+    build:
+      context: .
+      target: production
+    container_name: openapi-auth-api
+    command: uvicorn apps.auth.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
+  orders-api:
+    build:
+      context: .
+      target: production
+    container_name: openapi-orders-api
+    command: uvicorn apps.orders.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    ports:
+      - "8002:8000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      auth-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
+  file-processor-api:
+    build:
+      context: .
+      target: production
+    container_name: openapi-file-processor-api
+    command: uvicorn apps.file_processor.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    ports:
+      - "8003:8000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      auth-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
+  notifications-api:
+    build:
+      context: .
+      target: production
+    container_name: openapi-notifications-api
+    command: uvicorn apps.notifications.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+    ports:
+      - "8004:8000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      auth-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
+  webhook-tester-api:
+    build:
+      context: .
+      target: production
+    container_name: openapi-webhook-tester-api
+    command: uvicorn apps.webhook_tester.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+    ports:
+      - "8005:8000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      auth-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  flower_data:
+
+networks:
+  openapi-network:
+    driver: bridge

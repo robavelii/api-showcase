@@ -1,0 +1,146 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+# Deploy with one click: https://render.com/deploy
+
+services:
+  # Auth API
+  - type: web
+    name: openapi-showcase-auth
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn apps.auth.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Orders API
+  - type: web
+    name: openapi-showcase-orders
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn apps.orders.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # File Processor API
+  - type: web
+    name: openapi-showcase-files
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn apps.file_processor.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Notifications API
+  - type: web
+    name: openapi-showcase-notifications
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn apps.notifications.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Webhook Tester API
+  - type: web
+    name: openapi-showcase-webhooks
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn apps.webhook_tester.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Celery Worker
+  - type: worker
+    name: openapi-showcase-worker
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A shared.celery_app worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: openapi-showcase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: openapi-showcase-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Redis
+  - type: redis
+    name: openapi-showcase-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: openapi-showcase-db
+    plan: starter
+    databaseName: openapi_showcase
+    postgresMajorVersion: "16"

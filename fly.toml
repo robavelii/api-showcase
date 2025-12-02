@@ -1,0 +1,50 @@
+# Fly.io Configuration - https://fly.io/docs/reference/configuration/
+# Deploy: fly launch --copy-config
+
+app = "openapi-showcase"
+primary_region = "iad"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENVIRONMENT = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[processes]
+  app = "uvicorn apps.gateway.main:app --host 0.0.0.0 --port 8080"
+  worker = "celery -A shared.celery_app worker --loglevel=info"
+
+# Secrets to set via CLI:
+# fly secrets set DATABASE_URL=postgresql+asyncpg://...
+# fly secrets set REDIS_URL=redis://...
+# fly secrets set SECRET_KEY=your-secret-key
+
+# To deploy multiple services, create separate fly.toml files:
+# - fly.auth.toml for Auth API
+# - fly.orders.toml for Orders API
+# - fly.files.toml for File Processor API
+# - fly.notifications.toml for Notifications API
+# - fly.webhooks.toml for Webhook Tester API
