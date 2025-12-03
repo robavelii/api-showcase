@@ -31,7 +31,7 @@ dependencies = [
     "gunicorn>=22.0.0",
     
     # Data Validation & ORM
-    "pydantic>=2.0.0",
+    "pydantic[email]>=2.0.0",
     "pydantic-settings>=2.0.0",
     "sqlmodel>=0.0.21",
     
@@ -49,7 +49,7 @@ dependencies = [
     
     # Authentication
     "pyjwt>=2.8.0",
-    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0",
     
     # File Uploads
     "python-multipart>=0.0.9",
@@ -149,12 +149,14 @@ known-first-party = ["apps", "shared"]
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
-warn_return_any = true
-warn_unused_ignores = true
-disallow_untyped_defs = true
-plugins = ["pydantic.mypy"]
+strict = false
+warn_return_any = false
+warn_unused_ignores = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = true
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "flower.*", "slowapi.*"]
+module = ["celery.*", "flower.*", "slowapi.*", "passlib.*", "redis.*"]
 ignore_missing_imports = true

@@ -3,12 +3,13 @@
 Defines the WebhookEvent database model for tracking received webhooks.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, JSON
+from pydantic import ConfigDict
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 
@@ -37,7 +38,4 @@ class WebhookEvent(SQLModel, table=True):
     processed_at: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

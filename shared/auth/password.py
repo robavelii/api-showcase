@@ -3,16 +3,7 @@
 Provides secure password hashing and verification functions.
 """
 
-from passlib.context import CryptContext
-
-# Configure passlib with bcrypt
-# Using rounds=10 for balance between security and performance
-# In production, consider rounds=12 for higher security
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=10,
-)
+import bcrypt
 
 
 def hash_password(password: str) -> str:
@@ -24,7 +15,11 @@ def hash_password(password: str) -> str:
     Returns:
         The bcrypt hash of the password
     """
-    return pwd_context.hash(password)
+    # Truncate to 72 bytes (bcrypt limit)
+    password_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt(rounds=10)
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -37,4 +32,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if the password matches the hash, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        # Truncate to 72 bytes (bcrypt limit)
+        password_bytes = plain_password.encode("utf-8")[:72]
+        hashed_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except (ValueError, TypeError):
+        return False

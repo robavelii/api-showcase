@@ -3,7 +3,7 @@
 Provides health check functionality for database and Redis connectivity.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -17,7 +17,7 @@ from shared.config import get_settings
 
 class HealthStatus(str, Enum):
     """Health status enumeration."""
-    
+
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
@@ -25,7 +25,7 @@ class HealthStatus(str, Enum):
 
 class DependencyHealth(BaseModel):
     """Health status for a single dependency."""
-    
+
     name: str
     status: HealthStatus
     latency_ms: float | None = None
@@ -35,7 +35,7 @@ class DependencyHealth(BaseModel):
 
 class ServiceHealth(BaseModel):
     """Overall service health response."""
-    
+
     status: HealthStatus
     service: str
     version: str = Field(default="1.0.0")
@@ -45,7 +45,7 @@ class ServiceHealth(BaseModel):
 
 class HealthChecker:
     """Health checker for service dependencies."""
-    
+
     def __init__(
         self,
         service_name: str,
@@ -60,16 +60,17 @@ class HealthChecker:
     async def check_database(self) -> DependencyHealth:
         """Check database connectivity."""
         import time
-        
+
         start = time.perf_counter()
         try:
             if self.engine is None:
                 from shared.database.connection import get_engine
+
                 self.engine = get_engine()
-            
+
             async with self.engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
-            
+
             latency = (time.perf_counter() - start) * 1000
             return DependencyHealth(
                 name="database",
@@ -89,7 +90,7 @@ class HealthChecker:
     async def check_redis(self) -> DependencyHealth:
         """Check Redis connectivity."""
         import time
-        
+
         start = time.perf_counter()
         try:
             redis_client = redis.from_url(
@@ -99,7 +100,7 @@ class HealthChecker:
             )
             await redis_client.ping()
             await redis_client.close()
-            
+
             latency = (time.perf_counter() - start) * 1000
             return DependencyHealth(
                 name="redis",
@@ -119,27 +120,25 @@ class HealthChecker:
     async def check_all(self) -> ServiceHealth:
         """Check all dependencies and return overall health status."""
         dependencies = []
-        
+
         # Check database
         db_health = await self.check_database()
         dependencies.append(db_health)
-        
+
         # Check Redis
         redis_health = await self.check_redis()
         dependencies.append(redis_health)
-        
+
         # Determine overall status
-        unhealthy_count = sum(
-            1 for d in dependencies if d.status == HealthStatus.UNHEALTHY
-        )
-        
+        unhealthy_count = sum(1 for d in dependencies if d.status == HealthStatus.UNHEALTHY)
+
         if unhealthy_count == 0:
             overall_status = HealthStatus.HEALTHY
         elif unhealthy_count == len(dependencies):
             overall_status = HealthStatus.UNHEALTHY
         else:
             overall_status = HealthStatus.DEGRADED
-        
+
         return ServiceHealth(
             status=overall_status,
             service=self.service_name,

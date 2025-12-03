@@ -3,14 +3,16 @@
 Defines Pydantic schemas for user management endpoints.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserResponse(BaseModel):
     """User response schema."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID = Field(
         ...,
@@ -37,11 +39,6 @@ class UserResponse(BaseModel):
         description="Account creation timestamp",
         json_schema_extra={"example": "2024-01-15T10:30:00Z"},
     )
-
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
 
 
 class UserUpdate(BaseModel):

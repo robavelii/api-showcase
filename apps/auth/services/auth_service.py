@@ -4,7 +4,7 @@ Provides authentication business logic including registration, login,
 token refresh, and logout functionality.
 """
 
-from datetime import datetime, UTC, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from uuid import UUID
 
@@ -24,7 +24,6 @@ from shared.auth.jwt import (
     create_access_token,
     create_refresh_token,
     decode_token,
-    get_token_jti,
 )
 from shared.auth.password import hash_password, verify_password
 from shared.config import get_settings
@@ -58,9 +57,7 @@ class AuthService:
             ConflictError: If email already exists
         """
         # Check if email already exists
-        existing = await self._session.execute(
-            select(User).where(User.email == data.email)
-        )
+        existing = await self._session.execute(select(User).where(User.email == data.email))
         if existing.scalar_one_or_none():
             raise ConflictError("Email already registered")
 
@@ -103,9 +100,7 @@ class AuthService:
             AuthenticationError: If credentials are invalid
         """
         # Find user by email
-        result = await self._session.execute(
-            select(User).where(User.email == data.email)
-        )
+        result = await self._session.execute(select(User).where(User.email == data.email))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -159,7 +154,7 @@ class AuthService:
             result = await self._session.execute(
                 select(RefreshToken).where(
                     RefreshToken.token_hash == token_hash,
-                    RefreshToken.is_revoked == False,
+                    not RefreshToken.is_revoked,
                 )
             )
             stored_token = result.scalar_one_or_none()
@@ -187,7 +182,7 @@ class AuthService:
         except Exception as e:
             if isinstance(e, AuthenticationError):
                 raise
-            raise AuthenticationError("Invalid refresh token")
+            raise AuthenticationError("Invalid refresh token") from None
 
     async def logout(self, access_token: str, refresh_token: str) -> None:
         """Logout user by invalidating tokens.
@@ -220,9 +215,7 @@ class AuthService:
             token: Refresh token to store
         """
         settings = get_settings()
-        expires_at = datetime.now(timezone.utc) + timedelta(
-            days=settings.refresh_token_expire_days
-        )
+        expires_at = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
 
         refresh_token = RefreshToken(
             user_id=user_id,

@@ -6,7 +6,7 @@ Provides business logic for webhook verification and processing.
 import hashlib
 import hmac
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -50,9 +50,7 @@ class WebhookService:
         # Parse Stripe signature header
         # Format: t=timestamp,v1=signature
         try:
-            elements = dict(
-                item.split("=", 1) for item in signature.split(",")
-            )
+            elements = dict(item.split("=", 1) for item in signature.split(","))
             timestamp = elements.get("t")
             sig_v1 = elements.get("v1")
 
@@ -78,7 +76,6 @@ class WebhookService:
 
         except (ValueError, KeyError, UnicodeDecodeError):
             return False
-
 
     def process_webhook(
         self,
@@ -149,10 +146,10 @@ class WebhookService:
                     cursor_idx = idx
                     break
             if cursor_idx is not None:
-                webhooks = webhooks[cursor_idx + 1:]
+                webhooks = webhooks[cursor_idx + 1 :]
 
         # Get page with one extra
-        page_webhooks = webhooks[:limit + 1]
+        page_webhooks = webhooks[: limit + 1]
         has_more = len(page_webhooks) > limit
         page_webhooks = page_webhooks[:limit]
 
@@ -211,9 +208,7 @@ class WebhookService:
 
         return self._to_response(webhook)
 
-    def mark_failed(
-        self, webhook_id: UUID, error_message: str
-    ) -> WebhookEventResponse | None:
+    def mark_failed(self, webhook_id: UUID, error_message: str) -> WebhookEventResponse | None:
         """Mark a webhook as failed.
 
         Args:

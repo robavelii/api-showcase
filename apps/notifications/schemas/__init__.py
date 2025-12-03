@@ -1,9 +1,9 @@
 """Notifications schemas package."""
 
 from apps.notifications.schemas.notification import (
+    MarkAsReadRequest,
     NotificationResponse,
     SendNotificationRequest,
-    MarkAsReadRequest,
 )
 
 __all__ = [

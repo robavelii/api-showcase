@@ -3,10 +3,11 @@
 Defines the RefreshToken database model for tracking refresh tokens.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+from pydantic import ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -28,7 +29,4 @@ class RefreshToken(SQLModel, table=True):
     # Relationships
     user: "User" = Relationship(back_populates="refresh_tokens")
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

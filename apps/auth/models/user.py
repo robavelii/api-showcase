@@ -3,10 +3,11 @@
 Defines the User database model with authentication fields.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+from pydantic import ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ class User(SQLModel, table=True):
     """User database model."""
 
     __tablename__ = "users"
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True, max_length=255)
@@ -29,8 +31,3 @@ class User(SQLModel, table=True):
 
     # Relationships
     refresh_tokens: list["RefreshToken"] = Relationship(back_populates="user")
-
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True

@@ -3,7 +3,6 @@
 Provides endpoints for creating, listing, and managing webhook bins.
 """
 
-from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -29,6 +28,7 @@ def get_current_user_id() -> UUID:
     """Get the current user ID from auth context."""
     # In production, this would extract user ID from JWT token
     from uuid import uuid4
+
     return uuid4()
 
 
@@ -62,7 +62,7 @@ async def create_bin(
     user_id: UUID = Depends(get_current_user_id),
 ) -> BinResponse:
     """Create a new webhook bin.
-    
+
     Creates a new webhook bin that can receive and store webhook events.
     The bin URL can be used as a webhook endpoint for testing.
     """
@@ -102,7 +102,7 @@ async def list_bins(
     user_id: UUID = Depends(get_current_user_id),
 ) -> BinListResponse:
     """List all webhook bins owned by the current user.
-    
+
     Returns a list of all webhook bins created by the authenticated user.
     """
     bins = await service.list_bins(user_id)
@@ -125,7 +125,7 @@ async def get_bin(
     user_id: UUID = Depends(get_current_user_id),
 ) -> BinResponse:
     """Get details of a specific webhook bin.
-    
+
     Returns the details of a webhook bin if it exists and is owned by the user.
     """
     bin_response = await service.get_bin(bin_id)
@@ -134,14 +134,14 @@ async def get_bin(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
         )
-    
+
     # Check ownership
     if bin_response.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
         )
-    
+
     return bin_response
 
 
@@ -161,7 +161,7 @@ async def delete_bin(
     user_id: UUID = Depends(get_current_user_id),
 ) -> None:
     """Delete a webhook bin.
-    
+
     Deletes a webhook bin and all its captured events.
     Only the owner can delete a bin.
     """

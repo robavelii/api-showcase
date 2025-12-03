@@ -56,6 +56,24 @@ services:
     restart: "no"
 
   # ============================================
+  # Database Seeding (runs once after migrations)
+  # ============================================
+  seeder:
+    build:
+      context: .
+      target: production
+    container_name: openapi-seeder
+    command: python scripts/seed_data.py
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - openapi-network
+    restart: "no"
+
+  # ============================================
   # Background Task Processing
   # ============================================
   celery-worker:

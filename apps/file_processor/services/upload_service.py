@@ -3,10 +3,10 @@
 Handles file uploads and signed URL generation.
 """
 
-import os
 import hashlib
 import hmac
-from datetime import datetime, UTC, timedelta, UTC
+import os
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
@@ -18,7 +18,7 @@ from apps.file_processor.schemas.file import (
     SignedUrlResponse,
 )
 from shared.config import get_settings
-from shared.exceptions.errors import ValidationError, NotFoundError
+from shared.exceptions.errors import ValidationError
 
 
 class UploadService:
@@ -31,10 +31,10 @@ class UploadService:
 
     def _validate_content_type(self, content_type: str) -> None:
         """Validate that content type is allowed.
-        
+
         Args:
             content_type: MIME type to validate
-            
+
         Raises:
             ValidationError: If content type is not allowed
         """
@@ -46,10 +46,10 @@ class UploadService:
 
     def _validate_file_size(self, size: int) -> None:
         """Validate that file size is within limits.
-        
+
         Args:
             size: File size in bytes
-            
+
         Raises:
             ValidationError: If file size exceeds limit
         """
@@ -61,11 +61,11 @@ class UploadService:
 
     def _generate_storage_path(self, file_id: UUID, filename: str) -> str:
         """Generate storage path for a file.
-        
+
         Args:
             file_id: Unique file identifier
             filename: Original filename
-            
+
         Returns:
             Storage path for the file
         """
@@ -73,18 +73,16 @@ class UploadService:
         ext = os.path.splitext(filename)[1] if "." in filename else ""
         return f"{self.settings.storage_path}/{file_id}{ext}"
 
-    async def create_upload(
-        self, file: UploadFile, user_id: UUID
-    ) -> FileMetadata:
+    async def create_upload(self, file: UploadFile, user_id: UUID) -> FileMetadata:
         """Handle multipart file upload.
-        
+
         Args:
             file: Uploaded file from request
             user_id: ID of the user uploading the file
-            
+
         Returns:
             FileMetadata with uploaded file information
-            
+
         Raises:
             ValidationError: If file validation fails
         """
@@ -95,7 +93,7 @@ class UploadService:
         # Read file content to get size
         content = await file.read()
         size_bytes = len(content)
-        
+
         # Validate file size
         self._validate_file_size(size_bytes)
 
@@ -142,15 +140,15 @@ class UploadService:
         self, filename: str, content_type: str, user_id: UUID
     ) -> SignedUrlResponse:
         """Generate a signed URL for direct file upload.
-        
+
         Args:
             filename: Name of the file to upload
             content_type: MIME type of the file
             user_id: ID of the user requesting the upload
-            
+
         Returns:
             SignedUrlResponse with upload URL and expiration
-            
+
         Raises:
             ValidationError: If content type is not allowed
         """
@@ -159,12 +157,10 @@ class UploadService:
 
         # Generate file ID
         file_id = uuid4()
-        
+
         # Calculate expiration
-        expires_at = datetime.now(UTC) + timedelta(
-            seconds=self.settings.signed_url_expiry
-        )
-        
+        expires_at = datetime.now(UTC) + timedelta(seconds=self.settings.signed_url_expiry)
+
         # Generate signature for the URL
         # In production, this would use cloud storage SDK (S3, GCS, etc.)
         signature_data = f"{file_id}:{filename}:{content_type}:{expires_at.isoformat()}"
@@ -189,16 +185,14 @@ class UploadService:
             expires_at=expires_at,
         )
 
-    def validate_signed_url(
-        self, file_id: UUID, signature: str, expires: int
-    ) -> bool:
+    def validate_signed_url(self, file_id: UUID, signature: str, expires: int) -> bool:
         """Validate a signed upload URL.
-        
+
         Args:
             file_id: File ID from the URL
             signature: Signature from the URL
             expires: Expiration timestamp from the URL
-            
+
         Returns:
             True if signature is valid and not expired
         """

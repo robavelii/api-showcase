@@ -7,7 +7,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from apps.notifications.config import get_notifications_settings
 from apps.notifications.schemas.notification import (
     MarkAsReadRequest,
     NotificationResponse,
@@ -32,10 +31,10 @@ def get_notification_service() -> NotificationService:
     summary="Get notification history",
     description="""
     Retrieve notification history for the authenticated user.
-    
+
     Returns notifications in reverse chronological order (newest first)
     with cursor-based pagination.
-    
+
     **Pagination:**
     - Use `cursor` from previous response to get next page
     - Default page size is 20, max is 100
@@ -93,10 +92,10 @@ async def get_notifications(
     summary="Send notifications",
     description="""
     Send notifications to one or more users.
-    
+
     Notifications are persisted to the database and delivered in real-time
     via WebSocket to connected users.
-    
+
     **Note:** This endpoint is typically used by admin users or internal services.
     """,
     responses={
@@ -138,17 +137,13 @@ async def send_notifications(
     summary="Mark notifications as read",
     description="""
     Mark one or more notifications as read.
-    
+
     Only notifications owned by the authenticated user can be marked as read.
     """,
     responses={
         200: {
             "description": "Notifications marked as read",
-            "content": {
-                "application/json": {
-                    "example": {"marked_count": 3}
-                }
-            },
+            "content": {"application/json": {"example": {"marked_count": 3}}},
         },
         401: {"description": "Unauthorized"},
         422: {"description": "Validation error"},
@@ -171,11 +166,7 @@ async def mark_notifications_read(
     responses={
         200: {
             "description": "Unread count",
-            "content": {
-                "application/json": {
-                    "example": {"unread_count": 5}
-                }
-            },
+            "content": {"application/json": {"example": {"unread_count": 5}}},
         },
         401: {"description": "Unauthorized"},
     },

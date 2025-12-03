@@ -1,13 +1,13 @@
 """Webhook Tester schemas package."""
 
 from apps.webhook_tester.schemas.bin import (
-    CreateBinRequest,
-    BinResponse,
     BinListResponse,
+    BinResponse,
+    CreateBinRequest,
 )
 from apps.webhook_tester.schemas.event import (
-    EventResponse,
     EventListResponse,
+    EventResponse,
     ReplayEventRequest,
 )
 

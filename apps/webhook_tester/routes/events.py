@@ -3,7 +3,6 @@
 Provides endpoints for capturing and retrieving webhook events.
 """
 
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -71,7 +70,7 @@ async def capture_event(
     event_service: EventService = Depends(get_event_service),
 ) -> EventResponse:
     """Capture an incoming webhook request.
-    
+
     Captures all details of the incoming HTTP request including method,
     headers, body, and source IP. The event is stored and can be retrieved
     later for inspection.
@@ -83,7 +82,7 @@ async def capture_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found or inactive",
         )
-    
+
     # Capture the event
     return await event_service.capture_event(bin_id, request)
 
@@ -130,7 +129,7 @@ async def list_events(
     event_service: EventService = Depends(get_event_service),
 ) -> EventListResponse:
     """List all captured webhook events for a bin.
-    
+
     Returns events in reverse chronological order (newest first).
     Supports cursor-based pagination.
     """
@@ -141,11 +140,11 @@ async def list_events(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
         )
-    
+
     # Get events with pagination
     pagination = PaginationParams(cursor=cursor, limit=limit)
     result = await event_service.list_events(bin_id, pagination)
-    
+
     return EventListResponse(
         items=result.items,
         next_cursor=result.next_cursor,
@@ -170,7 +169,7 @@ async def get_event(
     event_service: EventService = Depends(get_event_service),
 ) -> EventResponse:
     """Get details of a specific webhook event.
-    
+
     Returns the full details of a captured webhook event including
     headers, body, and metadata.
     """
@@ -181,7 +180,7 @@ async def get_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
         )
-    
+
     # Get the event
     event = await event_service.get_event(bin_id, event_id)
     if not event:
@@ -189,7 +188,7 @@ async def get_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found",
         )
-    
+
     return event
 
 
@@ -223,7 +222,7 @@ async def replay_event(
     event_service: EventService = Depends(get_event_service),
 ) -> ReplayEventResponse:
     """Replay a captured webhook event to a target URL.
-    
+
     Sends the original request (method, headers, body) to the specified
     target URL and returns the response.
     """
@@ -234,6 +233,6 @@ async def replay_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
         )
-    
+
     # Replay the event
     return await event_service.replay_event(bin_id, event_id, request.target_url)

@@ -25,14 +25,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ============================================
 FROM base as builder
 
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Install pip and build tools
 RUN pip install --upgrade pip hatch
 
-# Copy project files
-COPY pyproject.toml ./
+# Copy project files needed for build
+COPY pyproject.toml README.md ./
 
-# Install dependencies
-RUN pip install . --target=/app/deps
+# Install dependencies into virtual environment
+RUN pip install .
 
 # ============================================
 # Stage 3: Production image
@@ -42,7 +46,7 @@ FROM python:3.11-slim as production
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
-    PYTHONPATH=/app/deps:/app
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
@@ -53,13 +57,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash appuser
 
-# Copy installed dependencies from builder
-COPY --from=builder /app/deps /app/deps
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code
 COPY apps/ ./apps/
 COPY shared/ ./shared/
 COPY migrations/ ./migrations/
+COPY scripts/ ./scripts/
 COPY alembic.ini ./
 
 # Copy entrypoint script

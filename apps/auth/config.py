@@ -21,9 +21,7 @@ class AuthSettings(BaseSettings):
 
     # Auth API settings
     api_title: str = Field(default="Auth API")
-    api_description: str = Field(
-        default="Authentication and user management API with JWT tokens"
-    )
+    api_description: str = Field(default="Authentication and user management API with JWT tokens")
     api_version: str = Field(default="1.0.0")
     api_prefix: str = Field(default="/api/v1")
 

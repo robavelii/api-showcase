@@ -3,13 +3,14 @@
 Defines the Order and OrderItem database models.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, JSON
+from pydantic import ConfigDict
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -42,10 +43,7 @@ class Order(SQLModel, table=True):
     # Relationships
     items: list["OrderItem"] = Relationship(back_populates="order")
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderItem(SQLModel, table=True):
@@ -64,7 +62,4 @@ class OrderItem(SQLModel, table=True):
     # Relationships
     order: Order = Relationship(back_populates="items")
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

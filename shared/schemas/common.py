@@ -3,15 +3,14 @@
 This module defines shared Pydantic models for consistent API responses.
 """
 
-from datetime import datetime, UTC
-from typing import Any
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 
 class ValidationErrorDetail(BaseModel):
     """Schema for individual validation error details."""
-    
+
     field: str = Field(..., description="The field that failed validation")
     message: str = Field(..., description="Human-readable error message")
     code: str = Field(..., description="Machine-readable error code")
@@ -19,16 +18,14 @@ class ValidationErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standard error response schema for all API errors.
-    
+
     This schema ensures consistent error responses across all endpoints,
     making it easier for clients to handle errors uniformly.
     """
-    
+
     detail: str = Field(..., description="Human-readable error message")
     status_code: int = Field(..., description="HTTP status code")
-    error_code: str | None = Field(
-        default=None, description="Machine-readable error code"
-    )
+    error_code: str | None = Field(default=None, description="Machine-readable error code")
     errors: list[ValidationErrorDetail] | None = Field(
         default=None, description="List of validation errors (for 422 responses)"
     )
@@ -66,6 +63,6 @@ class ErrorResponse(BaseModel):
 
 class SuccessResponse(BaseModel):
     """Generic success response for operations without specific return data."""
-    
+
     message: str = Field(..., description="Success message")
     success: bool = Field(default=True, description="Indicates operation success")

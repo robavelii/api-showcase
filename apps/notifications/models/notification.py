@@ -3,12 +3,13 @@
 Defines the Notification database model.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, JSON
+from pydantic import ConfigDict
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 
@@ -36,7 +37,4 @@ class Notification(SQLModel, table=True):
     extra_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

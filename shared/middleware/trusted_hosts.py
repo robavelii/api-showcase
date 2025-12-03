@@ -3,8 +3,6 @@
 Provides protection against host header attacks.
 """
 
-from typing import Type
-
 from fastapi import FastAPI
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -32,19 +30,20 @@ def setup_trusted_hosts(app: FastAPI, hosts: list[str] | None = None) -> None:
         )
 
 
-def get_trusted_hosts_middleware(hosts: list[str]) -> Type[TrustedHostMiddleware]:
+def get_trusted_hosts_middleware(hosts: list[str]) -> type[TrustedHostMiddleware]:
     """Get a configured TrustedHostMiddleware class.
-    
+
     Args:
         hosts: List of trusted hosts.
-    
+
     Returns:
         Configured TrustedHostMiddleware class.
     """
+
     class ConfiguredTrustedHostMiddleware(TrustedHostMiddleware):
         def __init__(self, app):
             super().__init__(app, allowed_hosts=hosts)
-    
+
     return ConfiguredTrustedHostMiddleware
 
 

@@ -5,7 +5,7 @@ Provides endpoints for user registration, login, token refresh, and logout.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -8,8 +8,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from apps.file_processor.schemas.conversion import (
-    ConversionRequest,
     ConversionJobResponse,
+    ConversionRequest,
     ConversionStatusResponse,
 )
 from apps.file_processor.services.conversion_service import (
@@ -67,12 +67,12 @@ async def convert_file(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e.detail),
-        )
+        ) from None
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.detail),
-        )
+        ) from None
 
 
 @router.get(
@@ -111,4 +111,4 @@ async def get_conversion_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e.detail),
-        )
+        ) from None

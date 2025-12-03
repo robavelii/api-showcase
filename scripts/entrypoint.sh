@@ -55,5 +55,17 @@ if [ "$APPLY_MIGRATIONS" = "true" ]; then
     fi
 fi
 
+# Run seed script if SEED_DATABASE is set
+if [ "$SEED_DATABASE" = "true" ]; then
+    echo "Seeding database..."
+    python scripts/seed_data.py
+    
+    if [ $? -eq 0 ]; then
+        echo "Database seeded successfully!"
+    else
+        echo "Warning: Seeding failed, but continuing startup..."
+    fi
+fi
+
 # Execute the main command
 exec "$@"

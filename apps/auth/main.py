@@ -95,12 +95,12 @@ app.include_router(users.router, prefix=auth_settings.api_prefix, tags=["Users"]
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint.
-    
+
     Returns service status and dependency health information including
     database and Redis connectivity.
     """
     from shared.health import check_health
-    
+
     health = await check_health(
         service_name="auth-api",
         version=auth_settings.api_version,
@@ -112,7 +112,7 @@ def custom_openapi():
     """Generate custom OpenAPI schema with security schemes."""
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title=app.title,
         version=app.version,
@@ -120,7 +120,7 @@ def custom_openapi():
         routes=app.routes,
         tags=tags_metadata,
     )
-    
+
     # Add security schemes
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
@@ -137,10 +137,10 @@ def custom_openapi():
             "description": "API key for service-to-service authentication",
         },
     }
-    
+
     # Add global security requirement
     openapi_schema["security"] = [{"BearerAuth": []}, {"ApiKeyAuth": []}]
-    
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

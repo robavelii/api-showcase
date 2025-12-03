@@ -10,7 +10,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from shared.auth.jwt import TokenPayload, decode_token
-from shared.config import get_settings
 
 # Security scheme for OpenAPI documentation
 security_scheme = HTTPBearer(auto_error=False)
@@ -53,10 +52,10 @@ async def get_token_payload(
 
         return payload
 
-    except jwt.ExpiredSignatureError:
-        raise AuthenticationError("Token has expired")
+    except jwt.ExpiredSignatureError as e:
+        raise AuthenticationError("Token has expired") from e
     except jwt.InvalidTokenError as e:
-        raise AuthenticationError(f"Invalid token: {str(e)}")
+        raise AuthenticationError(f"Invalid token: {str(e)}") from e
 
 
 async def get_optional_token_payload(
@@ -85,10 +84,10 @@ async def get_optional_token_payload(
 
         return payload
 
-    except jwt.ExpiredSignatureError:
-        raise AuthenticationError("Token has expired")
+    except jwt.ExpiredSignatureError as e:
+        raise AuthenticationError("Token has expired") from e
     except jwt.InvalidTokenError as e:
-        raise AuthenticationError(f"Invalid token: {str(e)}")
+        raise AuthenticationError(f"Invalid token: {str(e)}") from e
 
 
 async def get_current_user_id(

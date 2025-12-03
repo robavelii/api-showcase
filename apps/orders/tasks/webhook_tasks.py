@@ -68,7 +68,7 @@ def process_webhook_task(self, webhook_id: str) -> dict:
             return {"status": "failed", "webhook_id": webhook_id, "error": str(exc)}
 
         # Retry with exponential backoff
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 def _process_webhook_event(source: str, event_type: str, payload: dict) -> dict:

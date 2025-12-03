@@ -3,12 +3,11 @@
 Provides endpoints for file uploads.
 """
 
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from apps.file_processor.schemas.file import (
-    FileMetadata,
     SignedUrlRequest,
     SignedUrlResponse,
     UploadResponse,
@@ -60,7 +59,7 @@ async def upload_file(
     user_id = uuid4()
 
     file_metadata = await upload_service.create_upload(file, user_id)
-    
+
     return UploadResponse(
         file=file_metadata,
         message="File uploaded successfully",

@@ -7,7 +7,7 @@ Requirements: 4.6, 5.6, 6.6
 """
 
 import json
-from datetime import datetime, UTC
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID

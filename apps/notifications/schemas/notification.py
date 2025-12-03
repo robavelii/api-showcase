@@ -3,7 +3,7 @@
 Defines Pydantic schemas for notification management endpoints.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 

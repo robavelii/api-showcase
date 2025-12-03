@@ -3,10 +3,11 @@
 Represents file conversion jobs with status and progress tracking.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
+from pydantic import ConfigDict
 from sqlalchemy import Column, String, Text
 from sqlmodel import Field
 
@@ -24,7 +25,7 @@ class ConversionStatus(str, Enum):
 
 class ConversionJob(BaseModel, table=True):
     """ConversionJob model representing file conversion tasks.
-    
+
     Attributes:
         id: Unique job identifier
         file_id: ID of the source file
@@ -47,16 +48,12 @@ class ConversionJob(BaseModel, table=True):
     )
     progress: int = Field(default=0, ge=0, le=100)
     output_path: str | None = Field(default=None, max_length=500)
-    error_message: str | None = Field(
-        default=None, sa_column=Column(Text, nullable=True)
-    )
+    error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     started_at: datetime | None = Field(default=None)
     completed_at: datetime | None = Field(default=None)
 
-    class Config:
-        """Model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174002",
                 "file_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -71,3 +68,4 @@ class ConversionJob(BaseModel, table=True):
                 "updated_at": "2024-01-15T10:31:00Z",
             }
         }
+    )

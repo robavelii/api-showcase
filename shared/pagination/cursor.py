@@ -5,7 +5,7 @@ Provides encode/decode functions for cursor pagination and response schemas.
 
 import base64
 import json
-from datetime import datetime, UTC
+from datetime import datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
@@ -80,7 +80,7 @@ def decode_cursor(cursor: str) -> CursorData:
         data = json.loads(json_str)
         return CursorData(**data)
     except Exception as e:
-        raise ValueError(f"Invalid cursor: {str(e)}")
+        raise ValueError(f"Invalid cursor: {str(e)}") from e
 
 
 class PaginatedResponse(BaseModel, Generic[T]):

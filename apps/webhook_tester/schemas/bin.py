@@ -3,7 +3,7 @@
 Defines Pydantic schemas for webhook bin management endpoints.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -53,7 +53,9 @@ class BinResponse(BaseModel):
     url: str = Field(
         ...,
         description="URL to send webhooks to this bin",
-        json_schema_extra={"example": "https://api.example.com/550e8400-e29b-41d4-a716-446655440000"},
+        json_schema_extra={
+            "example": "https://api.example.com/550e8400-e29b-41d4-a716-446655440000"
+        },
     )
 
 

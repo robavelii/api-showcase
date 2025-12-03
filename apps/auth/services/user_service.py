@@ -3,7 +3,7 @@
 Provides user management business logic including profile retrieval and updates.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.auth.models.user import User
 from apps.auth.schemas.user import UserResponse, UserUpdate
-from shared.exceptions.errors import NotFoundError, ConflictError
+from shared.exceptions.errors import ConflictError, NotFoundError
 
 
 class UserService:
@@ -40,9 +40,7 @@ class UserService:
         if isinstance(user_id, str):
             user_id = UUID(user_id)
 
-        result = await self._session.execute(
-            select(User).where(User.id == user_id)
-        )
+        result = await self._session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -68,14 +66,10 @@ class UserService:
         if isinstance(user_id, str):
             user_id = UUID(user_id)
 
-        result = await self._session.execute(
-            select(User).where(User.id == user_id)
-        )
+        result = await self._session.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
 
-    async def update_user(
-        self, user_id: UUID | str, data: UserUpdate
-    ) -> UserResponse:
+    async def update_user(self, user_id: UUID | str, data: UserUpdate) -> UserResponse:
         """Update user profile.
 
         Args:
@@ -92,9 +86,7 @@ class UserService:
         if isinstance(user_id, str):
             user_id = UUID(user_id)
 
-        result = await self._session.execute(
-            select(User).where(User.id == user_id)
-        )
+        result = await self._session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -102,9 +94,7 @@ class UserService:
 
         # Check email uniqueness if updating email
         if data.email and data.email != user.email:
-            existing = await self._session.execute(
-                select(User).where(User.email == data.email)
-            )
+            existing = await self._session.execute(select(User).where(User.email == data.email))
             if existing.scalar_one_or_none():
                 raise ConflictError("Email already in use")
             user.email = data.email

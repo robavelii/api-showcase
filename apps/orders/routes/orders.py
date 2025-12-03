@@ -61,7 +61,9 @@ async def list_orders(
     status: Annotated[str | None, Query(description="Filter by status")] = None,
     customer_id: Annotated[UUID | None, Query(description="Filter by customer")] = None,
     sort_field: Annotated[str, Query(description="Sort field")] = "created_at",
-    sort_direction: Annotated[SortDirection, Query(description="Sort direction")] = SortDirection.DESC,
+    sort_direction: Annotated[
+        SortDirection, Query(description="Sort direction")
+    ] = SortDirection.DESC,
     order_service: OrderService = Depends(get_order_service),
 ) -> PaginatedResponse[OrderResponse]:
     """List orders with pagination, filtering, and sorting."""
@@ -74,7 +76,6 @@ async def list_orders(
         filters=filters,
         sort=sort,
     )
-
 
 
 @router.post(
@@ -134,6 +135,7 @@ async def create_order(
     # In a real app, user_id would come from authentication
     # For demo, we use a placeholder UUID
     from uuid import uuid4
+
     user_id = uuid4()
 
     return order_service.create_order(data, user_id)

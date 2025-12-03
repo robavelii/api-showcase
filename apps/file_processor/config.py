@@ -44,15 +44,13 @@ class FileProcessorSettings(BaseSettings):
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ]
     )
-    
+
     # Storage settings
-    storage_path: str = Field(default="/tmp/file_processor")
+    storage_path: str = Field(default="./data/file_processor")  # nosec B108
     signed_url_expiry: int = Field(default=3600)  # 1 hour in seconds
 
     # Conversion settings
-    supported_target_formats: list[str] = Field(
-        default=["pdf", "png", "jpg", "webp", "txt"]
-    )
+    supported_target_formats: list[str] = Field(default=["pdf", "png", "jpg", "webp", "txt"])
     conversion_timeout: int = Field(default=300)  # 5 minutes
 
     # Task retry settings

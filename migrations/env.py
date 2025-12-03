@@ -15,24 +15,10 @@ from sqlmodel import SQLModel
 
 # Import all models to ensure they are registered with SQLModel metadata
 # Auth models
-from apps.auth.models.user import User
-from apps.auth.models.token import RefreshToken
-
-# Orders models
-from apps.orders.models.order import Order, OrderItem
-from apps.orders.models.webhook_event import WebhookEvent
-
 # File processor models
-from apps.file_processor.models.file import File
-from apps.file_processor.models.conversion_job import ConversionJob
-
 # Notifications models
-from apps.notifications.models.notification import Notification
-
+# Orders models
 # Webhook tester models
-from apps.webhook_tester.models.bin import WebhookBin
-from apps.webhook_tester.models.event import BinEvent
-
 # Import settings for database URL
 from shared.config import get_settings
 

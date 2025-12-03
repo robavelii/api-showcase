@@ -3,7 +3,7 @@
 Provides JWT token creation and validation with Redis blocklist support.
 """
 
-from datetime import datetime, UTC, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -51,7 +51,7 @@ def create_access_token(
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.access_token_expire_minutes)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + expires_delta
 
     payload = {
@@ -86,7 +86,7 @@ def create_refresh_token(
     if expires_delta is None:
         expires_delta = timedelta(days=settings.refresh_token_expire_days)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + expires_delta
 
     payload = {
@@ -206,7 +206,7 @@ class TokenBlocklist:
         try:
             payload = decode_token(token, verify_exp=False)
             # Calculate remaining time until expiration
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             expires_in = int((payload.exp - now).total_seconds())
             if expires_in > 0:
                 await self.add_to_blocklist(payload.jti, expires_in)

@@ -4,7 +4,6 @@ Defines Pydantic schemas for authentication endpoints.
 """
 
 import re
-from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 

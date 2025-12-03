@@ -3,15 +3,16 @@
 Defines the WebhookBin database model.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from pydantic import ConfigDict
 from sqlmodel import Field, SQLModel
 
 
 class WebhookBin(SQLModel, table=True):
     """WebhookBin database model.
-    
+
     Represents a webhook bin that can receive and store webhook events.
     """
 
@@ -23,7 +24,4 @@ class WebhookBin(SQLModel, table=True):
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

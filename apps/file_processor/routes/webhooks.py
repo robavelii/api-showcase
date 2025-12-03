@@ -34,14 +34,14 @@ async def conversion_webhook(
     request: Request,
 ) -> dict:
     """Receive conversion completion webhook notifications.
-    
+
     This endpoint receives notifications when file conversions complete
     or fail. In a real application, this would trigger downstream
     processing or notifications.
     """
     # Log the webhook receipt
     # In production, you would process this webhook appropriately
-    
+
     return {
         "status": "received",
         "message": "Webhook processed successfully",

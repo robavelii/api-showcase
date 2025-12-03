@@ -3,11 +3,11 @@
 Defines Pydantic schemas for webhook event endpoints.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class EventResponse(BaseModel):

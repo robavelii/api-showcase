@@ -4,9 +4,9 @@ Provides health check functionality for database and Redis connectivity.
 """
 
 from shared.health.checker import (
+    DependencyHealth,
     HealthChecker,
     HealthStatus,
-    DependencyHealth,
     ServiceHealth,
     check_health,
 )

@@ -100,22 +100,24 @@ if settings.is_production:
 register_exception_handlers(app)
 
 # Include routers - imported after app creation to avoid circular imports
-from apps.notifications.routes import websocket, sse, notifications
+from apps.notifications.routes import notifications, sse, websocket  # noqa: E402
 
 app.include_router(websocket.router, tags=["WebSocket"])
 app.include_router(sse.router, prefix=notifications_settings.api_prefix, tags=["SSE"])
-app.include_router(notifications.router, prefix=notifications_settings.api_prefix, tags=["Notifications"])
+app.include_router(
+    notifications.router, prefix=notifications_settings.api_prefix, tags=["Notifications"]
+)
 
 
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint.
-    
+
     Returns service status and dependency health information including
     database and Redis connectivity.
     """
     from shared.health import check_health
-    
+
     health = await check_health(
         service_name="notifications-api",
         version=notifications_settings.api_version,
@@ -127,7 +129,7 @@ def custom_openapi():
     """Generate custom OpenAPI schema with security schemes."""
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title=app.title,
         version=app.version,
@@ -135,7 +137,7 @@ def custom_openapi():
         routes=app.routes,
         tags=tags_metadata,
     )
-    
+
     # Add security schemes
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
@@ -152,10 +154,10 @@ def custom_openapi():
             "description": "API key for service-to-service authentication",
         },
     }
-    
+
     # Add global security requirement
     openapi_schema["security"] = [{"BearerAuth": []}, {"ApiKeyAuth": []}]
-    
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

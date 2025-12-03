@@ -3,17 +3,18 @@
 Defines the BinEvent database model.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, JSON, Text
+from pydantic import ConfigDict
+from sqlalchemy import JSON, Column, Text
 from sqlmodel import Field, SQLModel
 
 
 class BinEvent(SQLModel, table=True):
     """BinEvent database model.
-    
+
     Represents a captured webhook event with all request details.
     """
 
@@ -30,7 +31,4 @@ class BinEvent(SQLModel, table=True):
     query_params: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     received_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

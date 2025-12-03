@@ -3,7 +3,7 @@
 Defines Pydantic schemas for webhook management endpoints.
 """
 
-from datetime import datetime, UTC
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -57,7 +57,6 @@ class WebhookEventResponse(BaseModel):
         description="Webhook receipt timestamp",
         json_schema_extra={"example": "2024-01-15T10:30:00Z"},
     )
-
 
 
 class WebhookRetryRequest(BaseModel):

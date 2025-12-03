@@ -6,7 +6,7 @@ Provides environment variable loading with sensible defaults for local developme
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, RedisDsn
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,14 +26,14 @@ class Settings(BaseSettings):
     debug: bool = Field(default=True)
 
     # Database
-    database_url: PostgresDsn = Field(
+    database_url: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/openapi_showcase"
     )
     database_pool_size: int = Field(default=5, ge=1, le=100)
     database_max_overflow: int = Field(default=10, ge=0, le=100)
 
     # Redis
-    redis_url: RedisDsn = Field(default="redis://localhost:6379/0")
+    redis_url: str = Field(default="redis://localhost:6379/0")
 
     # Security
     secret_key: str = Field(default="dev-secret-key-change-in-production")

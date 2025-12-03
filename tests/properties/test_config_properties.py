@@ -3,8 +3,8 @@
 **Feature: openapi-showcase, Property: Config loading with defaults**
 """
 
-import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from shared.config import Settings
 
@@ -34,7 +34,7 @@ class TestConfigProperties:
     ):
         """
         **Feature: openapi-showcase, Property: Config loading with defaults**
-        
+
         For any valid configuration values within constraints,
         Settings SHALL accept and store them correctly.
         """
@@ -59,14 +59,15 @@ class TestConfigProperties:
     def test_config_uses_sensible_defaults(self, clean_env):
         """
         **Feature: openapi-showcase, Property: Config loading with defaults**
-        
+
         When environment variables are missing,
         Settings SHALL use sensible defaults for local development.
         """
         # Clear the lru_cache to ensure fresh settings
         from shared.config import get_settings
+
         get_settings.cache_clear()
-        
+
         config = Settings()
 
         # Verify sensible defaults exist
@@ -80,11 +81,11 @@ class TestConfigProperties:
         assert config.rate_limit_per_minute == 100
         assert config.rate_limit_window_minutes == 15
         assert config.algorithm == "HS256"
-        
+
         # Verify default URLs are set for local development
         assert "localhost" in str(config.database_url)
         assert "localhost" in str(config.redis_url)
-        
+
         # Verify CORS defaults allow local development
         assert "http://localhost:3000" in config.cors_origins
         assert "localhost" in config.trusted_hosts
@@ -94,7 +95,7 @@ class TestConfigProperties:
     def test_environment_properties(self, app_env: str):
         """
         **Feature: openapi-showcase, Property: Config loading with defaults**
-        
+
         For any valid app_env value, the is_production and is_development
         properties SHALL correctly reflect the environment.
         """

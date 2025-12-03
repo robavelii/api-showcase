@@ -3,7 +3,7 @@
 Provides endpoints for webhook management and Stripe integration.
 """
 
-from typing import Annotated, Any
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
@@ -49,13 +49,14 @@ async def receive_stripe_webhook(
 
     # Parse payload
     import json
+
     try:
         payload = json.loads(body)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid JSON payload",
-        )
+        ) from e
 
     # Extract event type
     event_type = payload.get("type", "unknown")
@@ -72,7 +73,6 @@ async def receive_stripe_webhook(
     process_webhook_task.delay(str(webhook.id))
 
     return webhook
-
 
 
 @router.get(

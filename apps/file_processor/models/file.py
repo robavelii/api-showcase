@@ -3,10 +3,10 @@
 Represents uploaded files with metadata and status tracking.
 """
 
-from datetime import datetime, UTC
 from enum import Enum
 from uuid import UUID
 
+from pydantic import ConfigDict
 from sqlalchemy import Column, String
 from sqlmodel import Field
 
@@ -25,7 +25,7 @@ class FileStatus(str, Enum):
 
 class File(BaseModel, table=True):
     """File model representing uploaded files.
-    
+
     Attributes:
         id: Unique file identifier
         user_id: ID of the user who uploaded the file
@@ -50,10 +50,8 @@ class File(BaseModel, table=True):
         sa_column=Column(String(20), default=FileStatus.PENDING.value),
     )
 
-    class Config:
-        """Model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "user_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -66,3 +64,4 @@ class File(BaseModel, table=True):
                 "updated_at": None,
             }
         }
+    )

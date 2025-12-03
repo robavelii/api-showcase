@@ -7,7 +7,7 @@ uvicorn[standard]>=0.30.0
 gunicorn>=22.0.0
 
 # Data Validation & ORM
-pydantic>=2.0.0
+pydantic[email]>=2.0.0
 pydantic-settings>=2.0.0
 sqlmodel>=0.0.21
 
@@ -25,7 +25,7 @@ flower>=2.0.0
 
 # Authentication
 pyjwt>=2.8.0
-passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
 
 # File Uploads
 python-multipart>=0.0.9

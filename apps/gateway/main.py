@@ -87,10 +87,10 @@ register_exception_handlers(app)
 
 async def fetch_openapi_spec(url: str) -> dict | None:
     """Fetch OpenAPI spec from a service.
-    
+
     Args:
         url: Base URL of the service.
-    
+
     Returns:
         OpenAPI specification dict or None if fetch fails.
     """
@@ -119,7 +119,7 @@ async def get_combined_openapi():
     file_processor_spec = await fetch_openapi_spec(gateway_settings.file_processor_api_url)
     notifications_spec = await fetch_openapi_spec(gateway_settings.notifications_api_url)
     webhook_tester_spec = await fetch_openapi_spec(gateway_settings.webhook_tester_api_url)
-    
+
     # Create combined spec
     combined = create_combined_spec(
         auth_spec=auth_spec,
@@ -128,19 +128,19 @@ async def get_combined_openapi():
         notifications_spec=notifications_spec,
         webhook_tester_spec=webhook_tester_spec,
     )
-    
+
     return JSONResponse(content=combined)
 
 
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint.
-    
+
     Returns service status and dependency health information including
     database and Redis connectivity.
     """
     from shared.health import check_health
-    
+
     health = await check_health(
         service_name="gateway-api",
         version=gateway_settings.api_version,

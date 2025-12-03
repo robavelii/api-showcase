@@ -7,7 +7,7 @@ and exponential backoff.
 import logging
 import os
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 import httpx
@@ -43,7 +43,7 @@ def process_conversion_task(self, job_id: str) -> dict:
         Processing result dictionary
     """
     from apps.file_processor.services.conversion_service import get_conversion_service
-    
+
     conversion_service = get_conversion_service()
     job_uuid = UUID(job_id)
 
@@ -52,7 +52,7 @@ def process_conversion_task(self, job_id: str) -> dict:
 
         # Get the job
         job = conversion_service.get_job(job_uuid)
-        
+
         # Update status to processing
         conversion_service.update_job_status(
             job_uuid,
@@ -76,10 +76,10 @@ def process_conversion_task(self, job_id: str) -> dict:
                 progress=100,
                 output_path=result.get("output_path"),
             )
-            
+
             # Trigger webhook if configured
             _trigger_completion_webhook(job_uuid, job.file_id, result.get("output_path"))
-            
+
             logger.info(f"Conversion job {job_id} completed successfully")
             return {"status": "completed", "job_id": job_id}
         else:
@@ -96,10 +96,10 @@ def process_conversion_task(self, job_id: str) -> dict:
                 progress=0,
                 error_message=str(exc),
             )
-            
+
             # Trigger failure webhook
             _trigger_failure_webhook(job_uuid, job.file_id, str(exc))
-            
+
             logger.error(f"Conversion job {job_id} failed after {self.max_retries} retries")
             return {"status": "failed", "job_id": job_id, "error": str(exc)}
 
@@ -108,9 +108,9 @@ def process_conversion_task(self, job_id: str) -> dict:
             self.request.retries,
             settings.task_retry_base_delay,
         )
-        
+
         # Retry with exponential backoff
-        raise self.retry(exc=exc, countdown=delay)
+        raise self.retry(exc=exc, countdown=delay) from exc
 
 
 def _perform_conversion(
@@ -133,7 +133,7 @@ def _perform_conversion(
     try:
         # Get file info (in production, this would fetch from database)
         # For demo, we simulate the conversion process
-        
+
         # Simulate progress updates
         for progress in [10, 25, 50, 75, 90]:
             conversion_service.update_job_status(
@@ -146,7 +146,7 @@ def _perform_conversion(
 
         # Generate output path
         output_path = f"{settings.storage_path}/converted/{job_id}.{target_format}"
-        
+
         # In production, actual conversion would happen here
         # For demo, we just create an empty file
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

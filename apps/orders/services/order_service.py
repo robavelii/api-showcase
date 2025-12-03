@@ -3,7 +3,7 @@
 Provides business logic for order management.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -70,7 +70,6 @@ class OrderService:
         # Apply sorting
         orders = self._apply_sorting(orders, sort)
 
-
         # Apply cursor-based pagination
         if cursor:
             cursor_data = decode_cursor(cursor)
@@ -82,10 +81,10 @@ class OrderService:
                     cursor_idx = idx
                     break
             if cursor_idx is not None:
-                orders = orders[cursor_idx + 1:]
+                orders = orders[cursor_idx + 1 :]
 
         # Get one extra to determine if there are more
-        page_orders = orders[:limit + 1]
+        page_orders = orders[: limit + 1]
         has_more = len(page_orders) > limit
         page_orders = page_orders[:limit]
 
@@ -109,9 +108,7 @@ class OrderService:
             has_more=has_more,
         )
 
-    def _apply_filters(
-        self, orders: list[Order], filters: OrderFilters
-    ) -> list[Order]:
+    def _apply_filters(self, orders: list[Order], filters: OrderFilters) -> list[Order]:
         """Apply filter criteria to orders list."""
         result = orders
 
@@ -129,9 +126,7 @@ class OrderService:
 
         return result
 
-    def _apply_sorting(
-        self, orders: list[Order], sort: SortParams
-    ) -> list[Order]:
+    def _apply_sorting(self, orders: list[Order], sort: SortParams) -> list[Order]:
         """Apply sorting to orders list."""
         reverse = sort.direction == SortDirection.DESC
 
@@ -144,9 +139,7 @@ class OrderService:
 
         return sorted(orders, key=get_sort_key, reverse=reverse)
 
-    def create_order(
-        self, data: CreateOrderRequest, user_id: UUID
-    ) -> OrderResponse:
+    def create_order(self, data: CreateOrderRequest, user_id: UUID) -> OrderResponse:
         """Create a new order.
 
         Args:
@@ -208,9 +201,7 @@ class OrderService:
             return None
         return self._to_response(order)
 
-    def update_order(
-        self, order_id: UUID, data: UpdateOrderRequest
-    ) -> OrderResponse | None:
+    def update_order(self, order_id: UUID, data: UpdateOrderRequest) -> OrderResponse | None:
         """Update an existing order.
 
         Args:

@@ -4,7 +4,7 @@ This module provides exception handlers that convert exceptions into
 consistent JSON error responses following the ErrorResponse schema.
 """
 
-from datetime import datetime, UTC, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -27,7 +27,7 @@ def create_error_response(
     response = {
         "detail": detail,
         "status_code": status_code,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "request_id": request_id or str(uuid4()),
     }
     if error_code:
@@ -52,9 +52,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Handle Starlette/FastAPI HTTP exceptions."""
     request_id = getattr(request.state, "request_id", None) or str(uuid4())
     return JSONResponse(

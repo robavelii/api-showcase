@@ -92,7 +92,7 @@ if settings.is_production:
 register_exception_handlers(app)
 
 # Include routers - imported after app creation to avoid circular imports
-from apps.webhook_tester.routes import bins, events
+from apps.webhook_tester.routes import bins, events  # noqa: E402
 
 app.include_router(bins.router, prefix=webhook_tester_settings.api_prefix, tags=["Bins"])
 app.include_router(events.router, tags=["Events"])
@@ -101,12 +101,12 @@ app.include_router(events.router, tags=["Events"])
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint.
-    
+
     Returns service status and dependency health information including
     database and Redis connectivity.
     """
     from shared.health import check_health
-    
+
     health = await check_health(
         service_name="webhook-tester-api",
         version=webhook_tester_settings.api_version,
@@ -118,7 +118,7 @@ def custom_openapi():
     """Generate custom OpenAPI schema with security schemes."""
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title=app.title,
         version=app.version,
@@ -126,7 +126,7 @@ def custom_openapi():
         routes=app.routes,
         tags=tags_metadata,
     )
-    
+
     # Add security schemes
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
@@ -143,10 +143,10 @@ def custom_openapi():
             "description": "API key for service-to-service authentication",
         },
     }
-    
+
     # Add global security requirement
     openapi_schema["security"] = [{"BearerAuth": []}, {"ApiKeyAuth": []}]
-    
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
