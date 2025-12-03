@@ -8,8 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_IMAGE: robavelii/robavelii
 
 jobs:
   lint:
@@ -48,9 +47,9 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test_db
+          POSTGRES_USER: ${{ secrets.TEST_DB_USER || 'test' }}
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD || 'test' }}
+          POSTGRES_DB: ${{ secrets.TEST_DB_NAME || 'test_db' }}
         ports:
           - 5432:5432
         options: >-
@@ -70,9 +69,10 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+      DATABASE_URL: postgresql+asyncpg://${{ secrets.TEST_DB_USER || 'test' }}:${{ secrets.TEST_DB_PASSWORD || 'test' }}@localhost:5432/${{ secrets.TEST_DB_NAME || 'test_db' }}
       REDIS_URL: redis://localhost:6379/0
-      SECRET_KEY: test-secret-key-for-ci
+      SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+      SERVICE_API_KEY: ${{ secrets.TEST_SERVICE_API_KEY }}
       ENVIRONMENT: test
 
     steps:
@@ -114,16 +114,13 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: false
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    name: Build Docker Image
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    permissions:
-      contents: read
-      packages: write
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout code
@@ -132,22 +129,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.DOCKER_IMAGE }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
@@ -155,7 +149,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

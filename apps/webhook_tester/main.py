@@ -144,6 +144,18 @@ def custom_openapi():
         },
     }
 
+    # Replace HTTPBearer with BearerAuth in all paths
+    for path_data in openapi_schema.get("paths", {}).values():
+        for operation in path_data.values():
+            if isinstance(operation, dict) and "security" in operation:
+                new_security = []
+                for sec in operation["security"]:
+                    if "HTTPBearer" in sec:
+                        new_security.append({"BearerAuth": []})
+                    else:
+                        new_security.append(sec)
+                operation["security"] = new_security
+
     # Add global security requirement
     openapi_schema["security"] = [{"BearerAuth": []}, {"ApiKeyAuth": []}]
 
