@@ -3,7 +3,7 @@
 Defines the WebhookEvent database model for tracking received webhooks.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -11,6 +11,8 @@ from uuid import UUID, uuid4
 from pydantic import ConfigDict
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
+
+from shared.database.base import utc_now_naive
 
 
 class WebhookStatus(str, Enum):
@@ -36,6 +38,6 @@ class WebhookEvent(SQLModel, table=True):
     retry_count: int = Field(default=0)
     error_message: str | None = Field(default=None, max_length=1000)
     processed_at: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now_naive)
 
     model_config = ConfigDict(from_attributes=True)

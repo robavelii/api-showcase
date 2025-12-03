@@ -3,12 +3,14 @@
 Defines the RefreshToken database model for tracking refresh tokens.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from pydantic import ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
+
+from shared.database.base import utc_now_naive
 
 if TYPE_CHECKING:
     from apps.auth.models.user import User
@@ -24,7 +26,7 @@ class RefreshToken(SQLModel, table=True):
     token_hash: str = Field(unique=True, max_length=255)
     expires_at: datetime
     is_revoked: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now_naive)
 
     # Relationships
     user: "User" = Relationship(back_populates="refresh_tokens")

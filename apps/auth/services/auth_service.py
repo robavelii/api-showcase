@@ -4,7 +4,7 @@ Provides authentication business logic including registration, login,
 token refresh, and logout functionality.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from hashlib import sha256
 from uuid import UUID
 
@@ -27,6 +27,7 @@ from shared.auth.jwt import (
 )
 from shared.auth.password import hash_password, verify_password
 from shared.config import get_settings
+from shared.database.base import utc_now_naive
 from shared.exceptions.errors import AuthenticationError, ConflictError
 
 
@@ -215,7 +216,8 @@ class AuthService:
             token: Refresh token to store
         """
         settings = get_settings()
-        expires_at = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
+        # Use naive datetime (no timezone) for PostgreSQL TIMESTAMP WITHOUT TIME ZONE
+        expires_at = utc_now_naive() + timedelta(days=settings.refresh_token_expire_days)
 
         refresh_token = RefreshToken(
             user_id=user_id,

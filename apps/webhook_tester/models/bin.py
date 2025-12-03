@@ -3,11 +3,13 @@
 Defines the WebhookBin database model.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from pydantic import ConfigDict
 from sqlmodel import Field, SQLModel
+
+from shared.database.base import utc_now_naive
 
 
 class WebhookBin(SQLModel, table=True):
@@ -22,6 +24,6 @@ class WebhookBin(SQLModel, table=True):
     user_id: UUID = Field(index=True)
     name: str = Field(max_length=255, default="")
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now_naive)
 
     model_config = ConfigDict(from_attributes=True)

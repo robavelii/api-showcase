@@ -3,13 +3,15 @@
 Defines the BinEvent database model.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import ConfigDict
 from sqlalchemy import JSON, Column, Text
 from sqlmodel import Field, SQLModel
+
+from shared.database.base import utc_now_naive
 
 
 class BinEvent(SQLModel, table=True):
@@ -29,6 +31,6 @@ class BinEvent(SQLModel, table=True):
     content_type: str = Field(max_length=255, default="")
     source_ip: str = Field(max_length=45, default="")  # IPv6 max length
     query_params: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    received_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    received_at: datetime = Field(default_factory=utc_now_naive)
 
     model_config = ConfigDict(from_attributes=True)

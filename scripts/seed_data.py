@@ -19,7 +19,7 @@ Or with Docker:
 import asyncio
 import os
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -46,6 +46,35 @@ from shared.auth.password import hash_password
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://openapi:openapi_secret@localhost:5432/openapi_showcase"
 )
+
+
+async def clear_existing_data(session: AsyncSession):
+    """Clear existing seed data to allow re-running the script."""
+    print("Clearing existing data...")
+    from sqlalchemy import text
+
+    # Delete in order to respect foreign key constraints
+    tables = [
+        "bin_events",
+        "webhook_bins",
+        "notifications",
+        "conversion_jobs",
+        "files",
+        "webhook_events",
+        "order_items",
+        "orders",
+        "refresh_tokens",
+        "users",
+    ]
+
+    for table in tables:
+        try:
+            await session.execute(text(f"DELETE FROM {table}"))
+        except Exception:
+            pass  # Table might not exist
+
+    await session.commit()
+    print("  Cleared existing data")
 
 
 async def create_users(session: AsyncSession) -> list[User]:
@@ -94,7 +123,7 @@ async def create_users(session: AsyncSession) -> list[User]:
             full_name=data["full_name"],
             is_superuser=data["is_superuser"],
             is_active=True,
-            created_at=datetime.now(UTC),
+            created_at=datetime.utcnow(),
         )
         session.add(user)
         users.append(user)
@@ -113,10 +142,12 @@ async def create_orders(session: AsyncSession, users: list[User]) -> list[Order]
 
     for i, user in enumerate(users[1:], 1):  # Skip admin
         for j in range(3):  # 3 orders per user
+            # Use the enum value (string) for database compatibility
+            status = statuses[(i + j) % len(statuses)]
             order = Order(
                 id=uuid4(),
                 user_id=user.id,
-                status=statuses[(i + j) % len(statuses)],
+                status=status.value,
                 total_amount=Decimal(f"{(i * 100 + j * 50):.2f}"),
                 currency="USD",
                 shipping_address={
@@ -133,7 +164,7 @@ async def create_orders(session: AsyncSession, users: list[User]) -> list[Order]
                     "zip": f"1000{i}",
                     "country": "USA",
                 },
-                created_at=datetime.now(UTC) - timedelta(days=j * 7),
+                created_at=datetime.utcnow() - timedelta(days=j * 7),
             )
             session.add(order)
             orders.append(order)
@@ -206,7 +237,7 @@ async def create_webhook_events(session: AsyncSession) -> list[WebhookEvent]:
             event_type=data["event_type"],
             payload=data["payload"],
             status=data["status"],
-            created_at=datetime.now(UTC) - timedelta(hours=i),
+            created_at=datetime.utcnow() - timedelta(hours=i),
         )
         session.add(event)
         events.append(event)
@@ -246,7 +277,7 @@ async def create_files(session: AsyncSession, users: list[User]) -> list[File]:
             size_bytes=data["size"],
             storage_path=f"/uploads/{user.id}/{data['filename']}",
             status=FileStatus.UPLOADED,
-            created_at=datetime.now(UTC) - timedelta(days=i),
+            created_at=datetime.utcnow() - timedelta(days=i),
         )
         session.add(file)
         files.append(file)
@@ -262,7 +293,7 @@ async def create_files(session: AsyncSession, users: list[User]) -> list[File]:
                 output_path=f"/converted/{file.id}/output.{'pdf' if i != 0 else 'png'}"
                 if i == 0
                 else None,
-                created_at=datetime.now(UTC) - timedelta(days=i),
+                created_at=datetime.utcnow() - timedelta(days=i),
             )
             session.add(job)
 
@@ -319,7 +350,7 @@ async def create_notifications(session: AsyncSession, users: list[User]) -> list
                 type=data["type"],
                 is_read=i == 0,  # First notification is read
                 extra_data={"source": "seed_script"},
-                created_at=datetime.now(UTC) - timedelta(hours=i * 2),
+                created_at=datetime.utcnow() - timedelta(hours=i * 2),
             )
             session.add(notification)
             notifications.append(notification)
@@ -340,7 +371,7 @@ async def create_webhook_bins(session: AsyncSession, users: list[User]) -> list[
             user_id=user.id,
             name=f"{user.full_name}'s Test Bin",
             is_active=True,
-            created_at=datetime.now(UTC),
+            created_at=datetime.utcnow(),
         )
         session.add(bin)
         bins.append(bin)
@@ -357,7 +388,7 @@ async def create_webhook_bins(session: AsyncSession, users: list[User]) -> list[
                 content_type="application/json",
                 source_ip=f"192.168.1.{100 + j}",
                 query_params={"token": f"test_{j}"} if j % 2 == 1 else {},
-                received_at=datetime.now(UTC) - timedelta(minutes=j * 10),
+                received_at=datetime.utcnow() - timedelta(minutes=j * 10),
             )
             session.add(event)
 
@@ -380,6 +411,9 @@ async def seed_database():
 
     async with async_session() as session:
         try:
+            # Clear existing data first
+            await clear_existing_data(session)
+
             # Create all seed data
             users = await create_users(session)
             await create_orders(session, users)

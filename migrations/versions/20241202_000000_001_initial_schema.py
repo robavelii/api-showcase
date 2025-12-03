@@ -34,6 +34,13 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Create all database tables."""
 
+    # Create enum types first
+    op.execute("CREATE TYPE orderstatus AS ENUM ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')")
+    op.execute("CREATE TYPE webhookstatus AS ENUM ('pending', 'processing', 'completed', 'failed')")
+    op.execute("CREATE TYPE filestatus AS ENUM ('pending', 'uploading', 'uploaded', 'processing', 'completed', 'failed', 'deleted')")
+    op.execute("CREATE TYPE conversionstatus AS ENUM ('pending', 'processing', 'completed', 'failed')")
+    op.execute("CREATE TYPE notificationtype AS ENUM ('info', 'success', 'warning', 'error', 'system')")
+
     # Users table
     op.create_table(
         "users",
@@ -71,7 +78,10 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column(
-            "status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False, default="pending"
+            "status",
+            postgresql.ENUM("pending", "confirmed", "processing", "shipped", "delivered", "cancelled", name="orderstatus", create_type=False),
+            nullable=False,
+            server_default="pending",
         ),
         sa.Column("total_amount", sa.Numeric(precision=12, scale=2), nullable=False),
         sa.Column(
@@ -109,7 +119,10 @@ def upgrade() -> None:
         sa.Column("payload", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("signature", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
         sa.Column(
-            "status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False, default="pending"
+            "status",
+            postgresql.ENUM("pending", "processing", "completed", "failed", name="webhookstatus", create_type=False),
+            nullable=False,
+            server_default="pending",
         ),
         sa.Column("retry_count", sa.Integer(), nullable=False, default=0),
         sa.Column("error_message", sqlmodel.sql.sqltypes.AutoString(length=1000), nullable=True),
@@ -130,7 +143,10 @@ def upgrade() -> None:
         sa.Column("size_bytes", sa.Integer(), nullable=False),
         sa.Column("storage_path", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=False),
         sa.Column(
-            "status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False, default="pending"
+            "status",
+            postgresql.ENUM("pending", "uploading", "uploaded", "processing", "completed", "failed", "deleted", name="filestatus", create_type=False),
+            nullable=False,
+            server_default="pending",
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
@@ -145,7 +161,10 @@ def upgrade() -> None:
         sa.Column("file_id", sa.Uuid(), nullable=False),
         sa.Column("target_format", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column(
-            "status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False, default="pending"
+            "status",
+            postgresql.ENUM("pending", "processing", "completed", "failed", name="conversionstatus", create_type=False),
+            nullable=False,
+            server_default="pending",
         ),
         sa.Column("progress", sa.Integer(), nullable=False, default=0),
         sa.Column("output_path", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
@@ -167,7 +186,10 @@ def upgrade() -> None:
         sa.Column("title", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
         sa.Column("message", sqlmodel.sql.sqltypes.AutoString(length=2000), nullable=False),
         sa.Column(
-            "type", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False, default="info"
+            "type",
+            postgresql.ENUM("info", "success", "warning", "error", "system", name="notificationtype", create_type=False),
+            nullable=False,
+            server_default="info",
         ),
         sa.Column("is_read", sa.Boolean(), nullable=False, default=False),
         sa.Column("extra_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
@@ -246,3 +268,10 @@ def downgrade() -> None:
 
     op.drop_index("ix_users_email", table_name="users")
     op.drop_table("users")
+
+    # Drop enum types
+    op.execute("DROP TYPE IF EXISTS notificationtype")
+    op.execute("DROP TYPE IF EXISTS conversionstatus")
+    op.execute("DROP TYPE IF EXISTS filestatus")
+    op.execute("DROP TYPE IF EXISTS webhookstatus")
+    op.execute("DROP TYPE IF EXISTS orderstatus")

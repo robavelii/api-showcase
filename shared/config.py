@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     celery_broker_url: str = Field(default="redis://localhost:6379/1")
     celery_result_backend: str = Field(default="redis://localhost:6379/2")
 
+    # Service-to-Service Authentication
+    service_api_key: str = Field(default="dev-service-api-key-change-in-production")
+
     # API-specific settings
     auth_api_port: int = Field(default=8001)
     orders_api_port: int = Field(default=8002)

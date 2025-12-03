@@ -3,7 +3,6 @@
 Handles file conversion job queuing and status tracking.
 """
 
-from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from apps.file_processor.config import get_file_processor_settings
@@ -13,6 +12,7 @@ from apps.file_processor.schemas.conversion import (
     ConversionJobResponse,
     ConversionStatusResponse,
 )
+from shared.database.base import utc_now_naive
 from shared.exceptions.errors import NotFoundError, ValidationError
 
 
@@ -79,7 +79,7 @@ class ConversionService:
         self._get_file(file_id)
 
         # Create conversion job
-        now = datetime.now(UTC)
+        now = utc_now_naive()
         job = ConversionJob(
             id=uuid4(),
             file_id=file_id,
@@ -179,7 +179,7 @@ class ConversionService:
             NotFoundError: If job not found
         """
         job = self.get_job(job_id)
-        now = datetime.now(UTC)
+        now = utc_now_naive()
 
         job.status = status
         job.progress = progress

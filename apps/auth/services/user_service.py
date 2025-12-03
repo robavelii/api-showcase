@@ -3,7 +3,6 @@
 Provides user management business logic including profile retrieval and updates.
 """
 
-from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -11,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.auth.models.user import User
 from apps.auth.schemas.user import UserResponse, UserUpdate
+from shared.database.base import utc_now_naive
 from shared.exceptions.errors import ConflictError, NotFoundError
 
 
@@ -103,7 +103,7 @@ class UserService:
         if data.full_name:
             user.full_name = data.full_name
 
-        user.updated_at = datetime.now(UTC)
+        user.updated_at = utc_now_naive()
 
         await self._session.commit()
         await self._session.refresh(user)

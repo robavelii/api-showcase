@@ -1,0 +1,386 @@
+# Implementation Plan
+
+- [x] 1. Project Setup and Infrastructure
+  - [x] 1.1 Create monorepo directory structure
+    - Create root directories: apps/, shared/, docs/, tests/, migrations/
+    - Create app subdirectories: auth/, orders/, file_processor/, notifications/, webhook_tester/
+    - Create shared subdirectories: database/, auth/, pagination/, rate_limit/, middleware/, exceptions/, schemas/, utils/
+    - _Requirements: 1.1_
+  - [x] 1.2 Create pyproject.toml with all dependencies
+    - Configure Python 3.11+ requirement
+    - Add FastAPI 0.115+, Pydantic v2, SQLModel, asyncpg, redis, celery 5.4
+    - Add PyJWT, passlib, python-multipart, slowapi, uvicorn, gunicorn
+    - Add dev dependencies: pytest, pytest-asyncio, httpx, hypothesis, pytest-cov, factory-boy, faker
+    - _Requirements: 1.2_
+  - [x] 1.3 Create Docker and docker-compose configuration
+    - Create Dockerfile with multi-stage build for production
+    - Create docker-compose.yml with PostgreSQL 16, Redis 7, Celery workers, Flower, all 5 APIs
+    - Configure health checks and dependency ordering
+    - _Requirements: 1.3, 1.4_
+  - [x] 1.4 Create Makefile with common commands
+    - Add targets: dev, build, test, lint, migrate, shell
+    - _Requirements: 1.1_
+
+- [-] 2. Shared Module - Core Utilities
+  - [x] 2.1 Implement base configuration with Pydantic Settings
+    - Create shared/config.py with environment variable loading and defaults
+    - Support DATABASE_URL, REDIS_URL, SECRET_KEY, and API-specific settings
+    - _Requirements: 1.5_
+  - [x] 2.2 Write property test for configuration defaults
+    - **Property: Config loading with defaults**
+    - Test that missing env vars use sensible defaults
+    - **Validates: Requirements 1.5**
+  - [x] 2.3 Implement async database connection utilities
+    - Create shared/database/connection.py with async engine setup
+    - Create shared/database/session.py with async session management
+    - Create shared/database/base.py with BaseModel class
+    - _Requirements: 10.1, 10.4, 13.1_
+  - [x] 2.4 Implement JWT utilities
+    - Create shared/auth/jwt.py with encode/decode functions
+    - Support access tokens (15min) and refresh tokens (7 days)
+    - Include token blocklist checking via Redis
+    - _Requirements: 2.2, 2.3, 13.2_
+  - [x] 2.5 Implement password hashing utilities
+    - Create shared/auth/password.py with bcrypt hashing
+    - Implement hash_password() and verify_password() functions
+    - _Requirements: 12.4_
+  - [x] 2.6 Write property test for password hashing
+    - **Property 32: Password hashing**
+    - **Validates: Requirements 12.4**
+  - [x] 2.7 Implement auth dependency injectors
+    - Create shared/auth/dependencies.py with get_current_user dependency
+    - Support both required and optional authentication
+    - _Requirements: 13.2_
+  - [x] 2.8 Implement cursor-based pagination utilities
+    - Create shared/pagination/cursor.py with encode/decode cursor functions
+    - Create PaginatedResponse schema with items, next_cursor, has_more
+    - _Requirements: 3.1, 13.3_
+  - [x] 2.9 Write property test for cursor pagination
+    - **Property 7: Cursor pagination consistency**
+    - **Validates: Requirements 3.1**
+  - [x] 2.10 Implement rate limiting with slowapi
+    - Create shared/rate_limit/limiter.py with Redis backend
+    - Configure 100 req/15min per IP, per-user limits
+    - Add rate limit headers to responses
+    - _Requirements: 8.1, 8.2, 8.3, 8.4_
+  - [x] 2.11 Write property test for rate limiting
+    - **Property 31: Rate limit enforcement**
+    - **Validates: Requirements 8.1, 8.2, 8.3**
+  - [x] 2.12 Implement middleware (CORS, trusted hosts)
+    - Create shared/middleware/cors.py with configurable origins
+    - Create shared/middleware/trusted_hosts.py
+    - _Requirements: 12.1, 12.2_
+  - [x] 2.13 Write property test for CORS enforcement
+    - **Property 33: CORS enforcement**
+    - **Validates: Requirements 12.1**
+  - [x] 2.14 Implement exception handlers and error schemas
+    - Create shared/exceptions/errors.py with exception hierarchy
+    - Create shared/exceptions/handlers.py with FastAPI exception handlers
+    - Create shared/schemas/common.py with ErrorResponse schema
+    - _Requirements: 13.4_
+  - [x] 2.15 Write property test for error response format
+    - **Property 35: Consistent error response format**
+    - **Validates: Requirements 13.4**
+  - [x] 2.16 Implement serialization utilities
+    - Create shared/utils/serialization.py with JSON serialization helpers
+    - Support datetime, UUID, Decimal serialization
+    - _Requirements: 4.6, 5.6, 6.6_
+
+- [x] 3. Checkpoint - Shared Module Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Auth API Implementation
+  - [x] 4.1 Create Auth API app structure
+    - Create apps/auth/main.py with FastAPI app instance
+    - Create apps/auth/config.py with auth-specific settings
+    - Set up routes, services, models, schemas directories
+    - _Requirements: 1.1_
+  - [x] 4.2 Implement User model and schemas
+    - Create apps/auth/models/user.py with User SQLModel
+    - Create apps/auth/models/token.py with RefreshToken model
+    - Create apps/auth/schemas/ with request/response schemas
+    - _Requirements: 2.1_
+  - [x] 4.3 Implement AuthService
+    - Create apps/auth/services/auth_service.py
+    - Implement register(), login(), refresh(), logout() methods
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+  - [x] 4.4 Write property test for registration
+    - **Property 1: Valid registration produces valid tokens**
+    - **Validates: Requirements 2.1**
+  - [x] 4.5 Write property test for login
+    - **Property 2: Login with correct credentials returns valid tokens**
+    - **Validates: Requirements 2.2**
+  - [x] 4.6 Write property test for token refresh
+    - **Property 3: Refresh token rotation**
+    - **Validates: Requirements 2.3**
+  - [x] 4.7 Write property test for logout
+    - **Property 4: Logout invalidates tokens**
+    - **Validates: Requirements 2.4**
+  - [x] 4.8 Implement UserService
+    - Create apps/auth/services/user_service.py
+    - Implement get_current_user(), update_user() methods
+    - _Requirements: 2.5_
+  - [x] 4.9 Write property test for user retrieval
+    - **Property 5: Authenticated user retrieval**
+    - **Validates: Requirements 2.5**
+  - [x] 4.10 Implement auth routes
+    - Create apps/auth/routes/auth.py with POST /register, /login, /refresh, /logout
+    - Create apps/auth/routes/users.py with GET /users/me
+    - Add OpenAPI examples and security schemes
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 7.4, 7.5_
+  - [x] 4.11 Write property test for invalid auth
+    - **Property 6: Invalid authentication returns 401**
+    - **Validates: Requirements 2.6, 2.7**
+
+- [x] 5. Checkpoint - Auth API Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 6. Orders API Implementation
+  - [x] 6.1 Create Orders API app structure
+    - Create apps/orders/main.py with FastAPI app instance
+    - Set up routes, services, models, schemas, tasks directories
+    - _Requirements: 1.1_
+  - [x] 6.2 Implement Order models and schemas
+    - Create apps/orders/models/order.py with Order and OrderItem SQLModels
+    - Create apps/orders/models/webhook_event.py with WebhookEvent model
+    - Create request/response schemas with OpenAPI examples
+    - _Requirements: 3.4, 7.4_
+  - [x] 6.3 Implement OrderService with CRUD operations
+    - Create apps/orders/services/order_service.py
+    - Implement list_orders() with cursor pagination, filtering, sorting
+    - Implement create_order(), get_order(), update_order()
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+  - [x] 6.4 Write property test for order filtering
+    - **Property 8: Filter correctness**
+    - **Validates: Requirements 3.2**
+  - [x] 6.5 Write property test for order sorting
+    - **Property 9: Sort correctness**
+    - **Validates: Requirements 3.3**
+  - [x] 6.6 Write property test for order creation
+    - **Property 10: Order creation idempotency check**
+    - **Validates: Requirements 3.4**
+  - [x] 6.7 Write property test for order retrieval
+    - **Property 11: Order retrieval consistency**
+    - **Validates: Requirements 3.5**
+  - [x] 6.8 Write property test for order update
+    - **Property 12: Order update persistence**
+    - **Validates: Requirements 3.6**
+  - [x] 6.9 Implement WebhookService for Stripe webhooks
+    - Create apps/orders/services/webhook_service.py
+    - Implement verify_stripe_signature() with HMAC-SHA256
+    - Implement process_webhook(), list_webhooks(), retry_webhook()
+    - _Requirements: 3.7, 3.8, 12.5_
+  - [x] 6.10 Write property test for webhook signature verification
+    - **Property 13: Webhook signature verification**
+    - **Validates: Requirements 3.7, 12.5**
+  - [x] 6.11 Implement Celery tasks for webhook processing
+    - Create apps/orders/tasks/webhook_tasks.py
+    - Implement process_webhook_task with retry logic
+    - _Requirements: 3.7, 9.1_
+  - [x] 6.12 Implement orders routes
+    - Create apps/orders/routes/orders.py with GET/POST/PATCH /orders endpoints
+    - Create apps/orders/routes/webhooks.py with POST /webhooks/stripe, GET /webhooks
+    - _Requirements: 3.1-3.8_
+
+- [x] 7. Checkpoint - Orders API Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 8. File Processor API Implementation
+  - [x] 8.1 Create File Processor API app structure
+    - Create apps/file_processor/main.py with FastAPI app instance
+    - Set up routes, services, models, schemas, tasks directories
+    - _Requirements: 1.1_
+  - [x] 8.2 Implement File models and schemas
+    - Create apps/file_processor/models/file.py with File SQLModel
+    - Create apps/file_processor/models/conversion_job.py with ConversionJob model
+    - Create request/response schemas with OpenAPI examples
+    - _Requirements: 4.1, 4.2, 7.4_
+  - [x] 8.3 Implement UploadService
+    - Create apps/file_processor/services/upload_service.py
+    - Implement create_upload() for multipart uploads
+    - Implement generate_signed_url() for direct uploads
+    - _Requirements: 4.1_
+  - [x] 8.4 Write property test for file upload
+    - **Property 14: File upload acceptance**
+    - **Validates: Requirements 4.1**
+  - [x] 8.5 Implement ConversionService
+    - Create apps/file_processor/services/conversion_service.py
+    - Implement queue_conversion(), get_status()
+    - _Requirements: 4.2, 4.3_
+  - [x] 8.6 Write property test for conversion queuing
+    - **Property 15: Conversion job queuing**
+    - **Validates: Requirements 4.2**
+  - [x] 8.7 Write property test for status endpoint
+    - **Property 16: Status endpoint consistency**
+    - **Validates: Requirements 4.3**
+  - [x] 8.8 Implement Celery tasks for file conversion
+    - Create apps/file_processor/tasks/conversion_tasks.py
+    - Implement process_conversion_task with exponential backoff retry
+    - Trigger webhook on completion
+    - _Requirements: 4.2, 4.4, 4.5, 9.1, 9.3_
+  - [x] 8.9 Write property test for retry backoff
+    - **Property 17: Task retry with exponential backoff**
+    - **Validates: Requirements 4.5, 9.3**
+  - [x] 8.10 Write property test for file metadata serialization
+    - **Property 18: File metadata round-trip**
+    - **Validates: Requirements 4.6**
+  - [x] 8.11 Implement file processor routes
+    - Create apps/file_processor/routes/uploads.py with POST /uploads
+    - Create apps/file_processor/routes/files.py with POST /files/convert, GET /files/{id}/status
+    - Create apps/file_processor/routes/webhooks.py with POST /webhooks/convert
+    - _Requirements: 4.1-4.5_
+
+- [x] 9. Checkpoint - File Processor API Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 10. Notifications API Implementation
+  - [x] 10.1 Create Notifications API app structure
+    - Create apps/notifications/main.py with FastAPI app instance
+    - Set up routes, services, models, schemas directories
+    - _Requirements: 1.1_
+  - [x] 10.2 Implement Notification model and schemas
+    - Create apps/notifications/models/notification.py with Notification SQLModel
+    - Create request/response schemas with OpenAPI examples
+    - _Requirements: 5.4, 5.5, 7.4_
+  - [x] 10.3 Implement ConnectionManager for WebSocket
+    - Create apps/notifications/services/connection_manager.py
+    - Implement connect(), disconnect(), send_to_user(), broadcast()
+    - Store connections in Redis for multi-instance support
+    - _Requirements: 5.1, 5.2_
+  - [x] 10.4 Write property test for WebSocket authentication
+    - **Property 19: WebSocket authentication**
+    - **Validates: Requirements 5.1**
+  - [x] 10.5 Write property test for WebSocket delivery
+    - **Property 20: WebSocket message delivery**
+    - **Validates: Requirements 5.2**
+  - [x] 10.6 Implement NotificationService
+    - Create apps/notifications/services/notification_service.py
+    - Implement send_notification(), get_history(), mark_as_read()
+    - _Requirements: 5.4, 5.5_
+  - [x] 10.7 Write property test for notification history
+    - **Property 21: Notification history pagination**
+    - **Validates: Requirements 5.4**
+  - [x] 10.8 Write property test for notification persistence
+    - **Property 22: Notification persistence**
+    - **Validates: Requirements 5.5**
+  - [x] 10.9 Write property test for notification serialization
+    - **Property 23: Notification round-trip**
+    - **Validates: Requirements 5.6**
+  - [x] 10.10 Implement notifications routes
+    - Create apps/notifications/routes/websocket.py with WS /ws/notifications
+    - Create apps/notifications/routes/sse.py with GET /events
+    - Create apps/notifications/routes/notifications.py with GET/POST /notifications
+    - _Requirements: 5.1-5.5_
+
+- [x] 11. Checkpoint - Notifications API Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 12. Webhook Tester API Implementation
+  - [x] 12.1 Create Webhook Tester API app structure
+    - Create apps/webhook_tester/main.py with FastAPI app instance
+    - Set up routes, services, models, schemas directories
+    - _Requirements: 1.1_
+  - [x] 12.2 Implement WebhookBin and BinEvent models
+    - Create apps/webhook_tester/models/bin.py with WebhookBin SQLModel
+    - Create apps/webhook_tester/models/event.py with BinEvent model
+    - Create request/response schemas with OpenAPI examples
+    - _Requirements: 6.1, 6.2, 7.4_
+  - [x] 12.3 Implement BinService
+    - Create apps/webhook_tester/services/bin_service.py
+    - Implement create_bin(), list_bins(), delete_bin()
+    - _Requirements: 6.1, 6.3_
+  - [x] 12.4 Write property test for bin creation
+    - **Property 24: Bin creation uniqueness**
+    - **Validates: Requirements 6.1**
+  - [x] 12.5 Write property test for bin ownership
+    - **Property 26: Bin ownership isolation**
+    - **Validates: Requirements 6.3**
+  - [x] 12.6 Implement EventService
+    - Create apps/webhook_tester/services/event_service.py
+    - Implement capture_event(), list_events(), replay_event()
+    - Broadcast new events to WebSocket clients
+    - _Requirements: 6.2, 6.4, 6.5_
+  - [x] 12.7 Write property test for request capture
+    - **Property 25: Request capture completeness**
+    - **Validates: Requirements 6.2**
+  - [x] 12.8 Write property test for event retrieval
+    - **Property 27: Event retrieval for bin**
+    - **Validates: Requirements 6.4**
+  - [x] 12.9 Write property test for webhook event serialization
+    - **Property 28: Webhook event round-trip**
+    - **Validates: Requirements 6.6**
+  - [x] 12.10 Implement webhook tester routes
+    - Create apps/webhook_tester/routes/bins.py with POST/GET /bins
+    - Create apps/webhook_tester/routes/events.py with POST /{bin_id}, GET /{bin_id}/events
+    - _Requirements: 6.1-6.5_
+
+- [x] 13. Checkpoint - Webhook Tester API Complete
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 14. OpenAPI Documentation and Combined Spec
+  - [x] 14.1 Configure OpenAPI for each API
+    - Add comprehensive OpenAPI metadata to each app
+    - Configure Swagger UI at /docs, Redoc at /redoc
+    - Add securitySchemes for Bearer JWT and API-Key
+    - _Requirements: 7.1, 7.2, 7.5_
+  - [x] 14.2 Implement Stoplight Elements integration
+    - Create static HTML page for Stoplight Elements at /stoplight
+    - _Requirements: 7.3_
+  - [x] 14.3 Implement combined OpenAPI bundle endpoint
+    - Create root endpoint GET /openapi.json that combines all API specs
+    - Merge paths, components, and security schemes
+    - _Requirements: 7.6_
+  - [x] 14.4 Write property test for OpenAPI completeness
+    - **Property 29: OpenAPI spec completeness**
+    - **Validates: Requirements 7.4**
+  - [x] 14.5 Write property test for OpenAPI round-trip
+    - **Property 30: OpenAPI round-trip**
+    - **Validates: Requirements 7.7**
+
+- [x] 15. Health Checks and Monitoring
+  - [x] 15.1 Implement health check endpoints
+    - Add GET /health to each API
+    - Check database connectivity, Redis connectivity
+    - Return structured health status
+    - _Requirements: 12.3_
+  - [x] 15.2 Write property test for health check
+    - **Property 34: Health check availability**
+    - **Validates: Requirements 12.3**
+  - [x] 15.3 Configure Flower dashboard
+    - Set up Flower at /flower for Celery monitoring
+    - _Requirements: 9.2_
+
+- [x] 16. Database Migrations
+  - [x] 16.1 Set up Alembic configuration
+    - Create alembic.ini and migrations/ directory
+    - Configure async database support
+    - _Requirements: 10.2_
+  - [x] 16.2 Create initial migration
+    - Generate migration for all models (users, orders, files, notifications, webhook bins)
+    - _Requirements: 10.2_
+  - [x] 16.3 Configure auto-migration on startup
+    - Add migration script to docker-compose entrypoint
+    - _Requirements: 10.3_
+
+- [x] 17. CI/CD and Deployment
+  - [x] 17.1 Create GitHub Actions workflow
+    - Create .github/workflows/ci.yml
+    - Run tests, linting, type checking
+    - Build and push Docker image
+    - _Requirements: 11.3_
+  - [x] 17.2 Create deployment configurations
+    - Create render.yaml for Render deployment
+    - Create fly.toml for Fly.io deployment
+    - Create railway.json for Railway deployment
+    - _Requirements: 11.4_
+  - [x] 17.3 Create comprehensive README
+    - Create a seed script to add test data or a data to begin with
+    - Write README.md with badges, architecture diagram, quick start
+	  - Comprehensive documentation on how to test each apis
+    - Add one-click deploy buttons
+    - Include API documentation links
+	- Create a requirements.txt with all the neded packages and libraries for the project
+    - _Requirements: 11.4_
+
+- [x] 18. Final Checkpoint - All Tests Pass
+  - Ensure all tests pass, ask the user if questions arise.

@@ -3,7 +3,7 @@
 Defines the Order and OrderItem database models.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -12,6 +12,8 @@ from uuid import UUID, uuid4
 from pydantic import ConfigDict
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
+
+from shared.database.base import utc_now_naive
 
 
 class OrderStatus(str, Enum):
@@ -37,7 +39,7 @@ class Order(SQLModel, table=True):
     currency: str = Field(default="USD", max_length=3)
     shipping_address: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     billing_address: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now_naive)
     updated_at: datetime | None = Field(default=None)
 
     # Relationships

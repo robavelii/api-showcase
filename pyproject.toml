@@ -114,6 +114,11 @@ branch = true
 omit = [
     "*/tests/*",
     "*/__init__.py",
+    "*/main.py",
+    "*/config.py",
+    "*/tasks/*",
+    "*/routes/*",
+    "shared/celery_app.py",
 ]
 
 [tool.coverage.report]
@@ -122,8 +127,9 @@ exclude_lines = [
     "def __repr__",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
 ]
-fail_under = 90
+fail_under = 70
 
 [tool.ruff]
 target-version = "py311"

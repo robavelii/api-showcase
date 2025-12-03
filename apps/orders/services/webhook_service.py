@@ -6,13 +6,13 @@ Provides business logic for webhook verification and processing.
 import hashlib
 import hmac
 import time
-from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from apps.orders.config import get_orders_settings
 from apps.orders.models.webhook_event import WebhookEvent, WebhookStatus
 from apps.orders.schemas.webhook import WebhookEventResponse
+from shared.database.base import utc_now_naive
 from shared.pagination.cursor import (
     PaginatedResponse,
     decode_cursor,
@@ -204,7 +204,7 @@ class WebhookService:
             return None
 
         webhook.status = WebhookStatus.COMPLETED
-        webhook.processed_at = datetime.now(UTC)
+        webhook.processed_at = utc_now_naive()
 
         return self._to_response(webhook)
 

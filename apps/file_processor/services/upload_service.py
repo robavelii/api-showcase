@@ -18,6 +18,7 @@ from apps.file_processor.schemas.file import (
     SignedUrlResponse,
 )
 from shared.config import get_settings
+from shared.database.base import utc_now_naive
 from shared.exceptions.errors import ValidationError
 
 
@@ -110,7 +111,7 @@ class UploadService:
             f.write(content)
 
         # Create file record
-        now = datetime.now(UTC)
+        now = utc_now_naive()
         file_record = File(
             id=file_id,
             user_id=user_id,

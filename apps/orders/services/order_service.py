@@ -3,7 +3,6 @@
 Provides business logic for order management.
 """
 
-from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -17,6 +16,7 @@ from apps.orders.schemas.order import (
     SortParams,
     UpdateOrderRequest,
 )
+from shared.database.base import utc_now_naive
 from shared.pagination.cursor import (
     PaginatedResponse,
     decode_cursor,
@@ -228,7 +228,7 @@ class OrderService:
         if data.billing_address is not None:
             order.billing_address = data.billing_address.model_dump()
 
-        order.updated_at = datetime.now(UTC)
+        order.updated_at = utc_now_naive()
 
         return self._to_response(order)
 

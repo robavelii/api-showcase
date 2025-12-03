@@ -5,7 +5,8 @@ Provides endpoints for user profile management.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.auth.schemas.user import UserResponse, UserUpdate
@@ -15,6 +16,7 @@ from shared.database.session import get_session
 from shared.schemas.common import ErrorResponse
 
 router = APIRouter()
+security = HTTPBearer()
 
 
 def get_user_service(
@@ -57,6 +59,7 @@ def get_user_service(
 async def get_current_user(
     user_id: CurrentUserID,
     user_service: Annotated[UserService, Depends(get_user_service)],
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)],
 ) -> UserResponse:
     """Get current user profile.
 
@@ -104,6 +107,7 @@ async def update_current_user(
     user_id: CurrentUserID,
     data: UserUpdate,
     user_service: Annotated[UserService, Depends(get_user_service)],
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)],
 ) -> UserResponse:
     """Update current user profile.
 

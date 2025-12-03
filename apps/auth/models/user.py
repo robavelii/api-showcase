@@ -3,12 +3,14 @@
 Defines the User database model with authentication fields.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from pydantic import ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
+
+from shared.database.base import utc_now_naive
 
 if TYPE_CHECKING:
     from apps.auth.models.token import RefreshToken
@@ -26,7 +28,7 @@ class User(SQLModel, table=True):
     full_name: str = Field(max_length=255)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now_naive)
     updated_at: datetime | None = Field(default=None)
 
     # Relationships

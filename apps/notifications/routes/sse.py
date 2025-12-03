@@ -6,16 +6,19 @@ Provides SSE endpoint as a fallback for environments that don't support WebSocke
 import asyncio
 import json
 from collections.abc import AsyncGenerator
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Security
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from apps.notifications.config import get_notifications_settings
 from apps.notifications.services.connection_manager import get_connection_manager
 from shared.auth.dependencies import get_current_user_id
 
 router = APIRouter()
+security = HTTPBearer()
 
 
 async def event_generator(
@@ -93,6 +96,7 @@ async def event_generator(
 async def sse_notifications(
     request: Request,
     user_id: UUID = Depends(get_current_user_id),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Server-Sent Events endpoint for notifications.
 

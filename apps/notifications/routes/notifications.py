@@ -3,9 +3,11 @@
 Provides REST endpoints for notification CRUD operations.
 """
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from apps.notifications.schemas.notification import (
     MarkAsReadRequest,
@@ -18,6 +20,7 @@ from shared.auth.dependencies import get_current_user_id
 from shared.pagination.cursor import PaginatedResponse, PaginationParams
 
 router = APIRouter()
+security = HTTPBearer()
 
 
 def get_notification_service() -> NotificationService:
@@ -79,6 +82,7 @@ async def get_notifications(
         description="Number of notifications to return",
     ),
     service: NotificationService = Depends(get_notification_service),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Get notification history for the authenticated user."""
     pagination = PaginationParams(cursor=cursor, limit=limit)
@@ -126,6 +130,7 @@ async def send_notifications(
     request: SendNotificationRequest,
     user_id: UUID = Depends(get_current_user_id),
     service: NotificationService = Depends(get_notification_service),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Send notifications to specified users."""
     return await service.send_notification(request)
@@ -153,6 +158,7 @@ async def mark_notifications_read(
     request: MarkAsReadRequest,
     user_id: UUID = Depends(get_current_user_id),
     service: NotificationService = Depends(get_notification_service),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Mark notifications as read."""
     count = await service.mark_as_read(user_id, request.notification_ids)
@@ -174,6 +180,7 @@ async def mark_notifications_read(
 async def get_unread_count(
     user_id: UUID = Depends(get_current_user_id),
     service: NotificationService = Depends(get_notification_service),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Get unread notification count."""
     count = service.get_unread_count(user_id)
@@ -195,6 +202,7 @@ async def get_notification(
     notification_id: UUID,
     user_id: UUID = Depends(get_current_user_id),
     service: NotificationService = Depends(get_notification_service),
+    _credentials: Annotated[HTTPAuthorizationCredentials, Security(security)] = None,
 ):
     """Get a specific notification."""
     notification = await service.get_notification(user_id, notification_id)
