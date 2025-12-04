@@ -16,6 +16,7 @@ from apps.file_processor.services.conversion_service import (
     ConversionService,
     get_conversion_service,
 )
+from shared.auth.dependencies import CurrentUserID
 from shared.exceptions.errors import NotFoundError, ValidationError
 
 router = APIRouter()
@@ -58,6 +59,7 @@ router = APIRouter()
 )
 async def convert_file(
     data: ConversionRequest,
+    user_id: CurrentUserID,
     conversion_service: ConversionService = Depends(get_conversion_service),
 ) -> ConversionJobResponse:
     """Queue a file conversion job."""
@@ -102,6 +104,7 @@ async def convert_file(
 )
 async def get_conversion_status(
     file_id: UUID,
+    user_id: CurrentUserID,
     conversion_service: ConversionService = Depends(get_conversion_service),
 ) -> ConversionStatusResponse:
     """Get the current conversion status for a file."""

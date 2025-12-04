@@ -290,6 +290,46 @@ services:
     networks:
       - openapi-network
 
+  # ============================================
+  # API Gateway (Combined Documentation)
+  # ============================================
+  gateway:
+    build:
+      context: .
+      target: production
+    container_name: openapi-gateway
+    command: uvicorn apps.gateway.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openapi}:${POSTGRES_PASSWORD:-openapi_secret}@postgres:5432/${POSTGRES_DB:-openapi_showcase}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+      - AUTH_API_URL=http://auth-api:8000
+      - ORDERS_API_URL=http://orders-api:8000
+      - FILE_PROCESSOR_API_URL=http://file-processor-api:8000
+      - NOTIFICATIONS_API_URL=http://notifications-api:8000
+      - WEBHOOK_TESTER_API_URL=http://webhook-tester-api:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      auth-api:
+        condition: service_healthy
+      orders-api:
+        condition: service_healthy
+      file-processor-api:
+        condition: service_healthy
+      notifications-api:
+        condition: service_healthy
+      webhook-tester-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - openapi-network
+
 volumes:
   postgres_data:
   redis_data:

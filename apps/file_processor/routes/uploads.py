@@ -3,7 +3,7 @@
 Provides endpoints for file uploads.
 """
 
-from uuid import uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile, status
 
@@ -13,6 +13,7 @@ from apps.file_processor.schemas.file import (
     UploadResponse,
 )
 from apps.file_processor.services.upload_service import UploadService, get_upload_service
+from shared.auth.dependencies import CurrentUserID
 
 router = APIRouter()
 
@@ -51,14 +52,12 @@ router = APIRouter()
     },
 )
 async def upload_file(
+    user_id: CurrentUserID,
     file: UploadFile = File(..., description="File to upload"),
     upload_service: UploadService = Depends(get_upload_service),
 ) -> UploadResponse:
     """Upload a file using multipart form data."""
-    # In a real app, user_id would come from authentication
-    user_id = uuid4()
-
-    file_metadata = await upload_service.create_upload(file, user_id)
+    file_metadata = await upload_service.create_upload(file, UUID(user_id))
 
     return UploadResponse(
         file=file_metadata,
@@ -91,14 +90,12 @@ async def upload_file(
 )
 async def generate_signed_url(
     data: SignedUrlRequest,
+    user_id: CurrentUserID,
     upload_service: UploadService = Depends(get_upload_service),
 ) -> SignedUrlResponse:
     """Generate a signed URL for direct file upload."""
-    # In a real app, user_id would come from authentication
-    user_id = uuid4()
-
     return upload_service.generate_signed_url(
         data.filename,
         data.content_type,
-        user_id,
+        UUID(user_id),
     )

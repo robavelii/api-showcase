@@ -15,6 +15,7 @@ from apps.webhook_tester.schemas.event import (
 )
 from apps.webhook_tester.services.bin_service import BinService
 from apps.webhook_tester.services.event_service import EventService
+from shared.auth.dependencies import CurrentUserID
 from shared.pagination.cursor import PaginationParams
 
 router = APIRouter()
@@ -123,6 +124,7 @@ async def capture_event(
 )
 async def list_events(
     bin_id: UUID,
+    user_id: CurrentUserID,
     cursor: str | None = Query(default=None, description="Pagination cursor"),
     limit: int = Query(default=20, ge=1, le=100, description="Page size"),
     bin_service: BinService = Depends(get_bin_service),
@@ -133,9 +135,9 @@ async def list_events(
     Returns events in reverse chronological order (newest first).
     Supports cursor-based pagination.
     """
-    # Check if bin exists
+    # Check if bin exists and user owns it
     bin_model = await bin_service.get_bin_model(bin_id)
-    if not bin_model:
+    if not bin_model or str(bin_model.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
@@ -165,6 +167,7 @@ async def list_events(
 async def get_event(
     bin_id: UUID,
     event_id: UUID,
+    user_id: CurrentUserID,
     bin_service: BinService = Depends(get_bin_service),
     event_service: EventService = Depends(get_event_service),
 ) -> EventResponse:
@@ -173,9 +176,9 @@ async def get_event(
     Returns the full details of a captured webhook event including
     headers, body, and metadata.
     """
-    # Check if bin exists
+    # Check if bin exists and user owns it
     bin_model = await bin_service.get_bin_model(bin_id)
-    if not bin_model:
+    if not bin_model or str(bin_model.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
@@ -218,6 +221,7 @@ async def replay_event(
     bin_id: UUID,
     event_id: UUID,
     request: ReplayEventRequest,
+    user_id: CurrentUserID,
     bin_service: BinService = Depends(get_bin_service),
     event_service: EventService = Depends(get_event_service),
 ) -> ReplayEventResponse:
@@ -226,9 +230,9 @@ async def replay_event(
     Sends the original request (method, headers, body) to the specified
     target URL and returns the response.
     """
-    # Check if bin exists
+    # Check if bin exists and user owns it
     bin_model = await bin_service.get_bin_model(bin_id)
-    if not bin_model:
+    if not bin_model or str(bin_model.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",

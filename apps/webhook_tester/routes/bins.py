@@ -13,6 +13,7 @@ from apps.webhook_tester.schemas.bin import (
     CreateBinRequest,
 )
 from apps.webhook_tester.services.bin_service import BinService
+from shared.auth.dependencies import CurrentUserID
 
 router = APIRouter()
 
@@ -21,15 +22,6 @@ router = APIRouter()
 def get_bin_service() -> BinService:
     """Get the bin service instance."""
     return BinService()
-
-
-# Mock user ID for demo (in production, use auth dependency)
-def get_current_user_id() -> UUID:
-    """Get the current user ID from auth context."""
-    # In production, this would extract user ID from JWT token
-    from uuid import uuid4
-
-    return uuid4()
 
 
 @router.post(
@@ -57,16 +49,16 @@ def get_current_user_id() -> UUID:
     },
 )
 async def create_bin(
+    user_id: CurrentUserID,
     request: CreateBinRequest | None = None,
     service: BinService = Depends(get_bin_service),
-    user_id: UUID = Depends(get_current_user_id),
 ) -> BinResponse:
     """Create a new webhook bin.
 
     Creates a new webhook bin that can receive and store webhook events.
     The bin URL can be used as a webhook endpoint for testing.
     """
-    return await service.create_bin(user_id, request)
+    return await service.create_bin(UUID(user_id), request)
 
 
 @router.get(
@@ -98,14 +90,14 @@ async def create_bin(
     },
 )
 async def list_bins(
+    user_id: CurrentUserID,
     service: BinService = Depends(get_bin_service),
-    user_id: UUID = Depends(get_current_user_id),
 ) -> BinListResponse:
     """List all webhook bins owned by the current user.
 
     Returns a list of all webhook bins created by the authenticated user.
     """
-    bins = await service.list_bins(user_id)
+    bins = await service.list_bins(UUID(user_id))
     return BinListResponse(items=bins, total=len(bins))
 
 
@@ -121,8 +113,8 @@ async def list_bins(
 )
 async def get_bin(
     bin_id: UUID,
+    user_id: CurrentUserID,
     service: BinService = Depends(get_bin_service),
-    user_id: UUID = Depends(get_current_user_id),
 ) -> BinResponse:
     """Get details of a specific webhook bin.
 
@@ -136,7 +128,7 @@ async def get_bin(
         )
 
     # Check ownership
-    if bin_response.user_id != user_id:
+    if str(bin_response.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found",
@@ -157,15 +149,15 @@ async def get_bin(
 )
 async def delete_bin(
     bin_id: UUID,
+    user_id: CurrentUserID,
     service: BinService = Depends(get_bin_service),
-    user_id: UUID = Depends(get_current_user_id),
 ) -> None:
     """Delete a webhook bin.
 
     Deletes a webhook bin and all its captured events.
     Only the owner can delete a bin.
     """
-    deleted = await service.delete_bin(bin_id, user_id)
+    deleted = await service.delete_bin(bin_id, UUID(user_id))
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

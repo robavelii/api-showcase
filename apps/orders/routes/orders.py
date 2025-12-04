@@ -17,6 +17,7 @@ from apps.orders.schemas.order import (
     UpdateOrderRequest,
 )
 from apps.orders.services.order_service import OrderService, get_order_service
+from shared.auth.dependencies import CurrentUserID
 from shared.pagination.cursor import PaginatedResponse
 
 router = APIRouter()
@@ -56,6 +57,7 @@ router = APIRouter()
     },
 )
 async def list_orders(
+    user_id: CurrentUserID,
     cursor: Annotated[str | None, Query(description="Pagination cursor")] = None,
     limit: Annotated[int, Query(ge=1, le=100, description="Page size")] = 20,
     status: Annotated[str | None, Query(description="Filter by status")] = None,
@@ -75,6 +77,7 @@ async def list_orders(
         limit=limit,
         filters=filters,
         sort=sort,
+        user_id=UUID(user_id),
     )
 
 
@@ -129,16 +132,11 @@ async def list_orders(
 )
 async def create_order(
     data: CreateOrderRequest,
+    user_id: CurrentUserID,
     order_service: OrderService = Depends(get_order_service),
 ) -> OrderResponse:
     """Create a new order."""
-    # In a real app, user_id would come from authentication
-    # For demo, we use a placeholder UUID
-    from uuid import uuid4
-
-    user_id = uuid4()
-
-    return order_service.create_order(data, user_id)
+    return order_service.create_order(data, UUID(user_id))
 
 
 @router.get(
@@ -157,11 +155,18 @@ async def create_order(
 )
 async def get_order(
     order_id: UUID,
+    user_id: CurrentUserID,
     order_service: OrderService = Depends(get_order_service),
 ) -> OrderResponse:
     """Get an order by ID."""
     order = order_service.get_order(order_id)
     if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order {order_id} not found",
+        )
+    # Verify ownership
+    if str(order.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Order {order_id} not found",
@@ -186,13 +191,17 @@ async def get_order(
 async def update_order(
     order_id: UUID,
     data: UpdateOrderRequest,
+    user_id: CurrentUserID,
     order_service: OrderService = Depends(get_order_service),
 ) -> OrderResponse:
     """Update an existing order."""
-    order = order_service.update_order(order_id, data)
-    if order is None:
+    # First check if order exists and user owns it
+    existing_order = order_service.get_order(order_id)
+    if existing_order is None or str(existing_order.user_id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Order {order_id} not found",
         )
+
+    order = order_service.update_order(order_id, data)
     return order

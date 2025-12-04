@@ -54,9 +54,9 @@ The central gateway providing combined documentation for all OpenAPI Showcase se
 - `/openapi.json` - Combined OpenAPI specification
 """,
     version=gateway_settings.api_version,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url=None,  # We'll serve our own combined spec
+    docs_url=None,  # We'll serve custom docs
+    redoc_url=None,  # We'll serve custom redoc
+    openapi_url=None,  # We serve our own combined spec at /openapi.json
     openapi_tags=tags_metadata,
     contact={
         "name": "API Support",
@@ -177,3 +177,73 @@ STOPLIGHT_HTML = """
 async def stoplight_docs():
     """Serve Stoplight Elements documentation."""
     return STOPLIGHT_HTML
+
+
+# Custom Swagger UI
+SWAGGER_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenAPI Showcase - Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        html { box-sizing: border-box; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin: 0; background: #fafafa; }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+        window.onload = function() {
+            SwaggerUIBundle({
+                url: "/openapi.json",
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: "StandaloneLayout",
+                deepLinking: true,
+                showExtensions: true,
+                showCommonExtensions: true
+            });
+        };
+    </script>
+</body>
+</html>
+"""
+
+
+@app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
+async def swagger_ui():
+    """Serve Swagger UI documentation."""
+    return SWAGGER_HTML
+
+
+# Custom ReDoc
+REDOC_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenAPI Showcase - ReDoc</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <redoc spec-url='/openapi.json'></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+</body>
+</html>
+"""
+
+
+@app.get("/redoc", response_class=HTMLResponse, include_in_schema=False)
+async def redoc():
+    """Serve ReDoc documentation."""
+    return REDOC_HTML
